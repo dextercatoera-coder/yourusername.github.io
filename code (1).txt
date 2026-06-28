@@ -1,0 +1,19 @@
+HTML
+├── head (styles, fonts)
+├── body
+│   ├── Connection Status Bar (shows connected/local mode)
+│   ├── Setup Wizard Modal (first-time setup)
+│   ├── Top Navigation
+│   ├── Dashboard Page
+│   ├── Export Page
+│   ├── Performance Page
+│   ├── Team Management Page
+│   ├── Submit Modal
+│   ├── Member Modal
+│   └── Toast
+└── script
+    ├── CONFIG (API URL, list names)
+    ├── API Layer (fetch-based or localStorage-based)
+    ├── Data Cache (local copy of data)
+    ├── UI Functions (same as before)
+    └── Event Handlers (async)

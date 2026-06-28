@@ -1,0 +1,7 @@
+{
+  "type": "object",
+  "properties": {
+    "action": { "type": "string" },
+    "data": { "type": "object" }
+  }
+}

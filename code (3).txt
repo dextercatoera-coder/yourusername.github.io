@@ -1,0 +1,14 @@
+Trigger: "When an HTTP request is received"
+  Method: GET
+  Request Body JSON Schema: (leave empty)
+
+  → "Get items" from SS_TeamRoster
+  → "Get items" from SS_PrioritySubmissions
+     Filter Query: Title eq '{week}'   (from query param)
+
+  → "Response"
+     Status: 200
+     Body: {
+       "members": [ ...outputs('Get_items')... ],
+       "submissions": [ ...outputs('Get_items_2')... ]
+     }

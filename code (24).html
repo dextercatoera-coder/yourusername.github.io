@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Stellar Seeds — Weekly Priority Tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Mono:wght@300;400;500&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#faf8f4;--bg-warm:#f5f0e8;--surface:#fff;--surface-hover:#fdfcfa;--surface-alt:#f0ece4;--accent:#2d6a3f;--accent-light:#3d8b54;--accent-dim:rgba(45,106,63,.08);--accent-dim2:rgba(45,106,63,.14);--gold:#c8982c;--gold-light:#e2b94a;--gold-dim:rgba(200,152,44,.10);--gold-dim2:rgba(200,152,44,.18);--red:#c0392b;--red-dim:rgba(192,57,43,.08);--blue:#2a6fa8;--blue-dim:rgba(42,111,168,.08);--ink:#1a1714;--ink-mid:#5a554e;--ink-light:#8a847c;--ink-faint:#b5b0a8;--border:#e0dbd2;--border-light:#ebe6dd;--shadow:rgba(26,23,20,.06);--shadow-md:rgba(26,23,20,.10)}
+*{margin:0;padding:0;box-sizing:border-box}html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--ink);font-family:'DM Mono',monospace;font-size:13px;line-height:1.6;min-height:100vh}
+body::before{content:'';position:fixed;inset:0;background-image:radial-gradient(circle at 20% 30%,rgba(45,106,63,.015) 0px,transparent 1px),radial-gradient(circle at 80% 70%,rgba(200,152,44,.015) 0px,transparent 1px);background-size:24px 24px,28px 28px;pointer-events:none;z-index:0}
+.wrapper{position:relative;z-index:1}
+.motif-bar{height:4px;background:linear-gradient(90deg,var(--accent) 0%,var(--gold) 50%,var(--accent) 100%);opacity:.6}
+.conn-bar{padding:6px 32px;font-size:10px;text-align:center;letter-spacing:1px;text-transform:uppercase;font-family:'Syne',sans-serif;font-weight:600}
+.conn-bar.connected{background:var(--accent-dim);color:var(--accent)}
+.conn-bar.local{background:var(--gold-dim);color:var(--gold)}
+.conn-bar.error{background:var(--red-dim);color:var(--red)}
+.topbar{position:sticky;top:0;z-index:100;background:rgba(250,248,244,.92);backdrop-filter:blur(16px);border-bottom:1px solid var(--border);padding:0 32px;display:flex;align-items:center;justify-content:space-between;height:60px}
+.topbar-brand{display:flex;align-items:center;gap:12px}
+.brand-icon{width:36px;height:36px;background:var(--accent);border-radius:50%;display:flex;align-items:center;justify-content:center;position:relative}
+.brand-icon::before{content:'✦';color:var(--gold-light);font-size:14px}
+.brand-icon::after{content:'';position:absolute;width:28px;height:28px;border:1.5px solid rgba(255,255,255,.25);border-radius:50%}
+.brand-text{font-family:'Syne',sans-serif;font-weight:800;font-size:16px;text-transform:uppercase;letter-spacing:3px;color:var(--accent)}
+.brand-sub{font-size:9px;text-transform:uppercase;letter-spacing:2px;color:var(--gold);font-weight:500}
+.topbar-nav{display:flex}.topbar-nav a{color:var(--ink-light);text-decoration:none;font-size:11px;text-transform:uppercase;letter-spacing:1.5px;padding:20px 14px;border-bottom:2px solid transparent;transition:all .2s;font-weight:500;font-family:'Syne',sans-serif}.topbar-nav a:hover{color:var(--ink)}.topbar-nav a.active{color:var(--accent);border-bottom-color:var(--accent)}
+.topbar-date{font-size:11px;color:var(--ink-faint);text-align:right}.topbar-date strong{color:var(--ink-mid);font-weight:500}
+.section-container{max-width:1280px;margin:0 auto;padding:36px 32px}
+.page-section{display:none}.page-section.active{display:block}
+.section-header{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:28px;flex-wrap:wrap;gap:16px}
+.section-tag{font-family:'Syne',sans-serif;font-weight:700;font-size:10px;text-transform:uppercase;letter-spacing:2.5px;color:var(--accent);margin-bottom:6px}
+.section-header h2{font-family:'Instrument Serif',serif;font-size:30px;font-weight:400;line-height:1.15}
+.motif-dots{display:flex;gap:6px;align-items:center;margin-bottom:8px}
+.motif-dots span{width:4px;height:4px;border-radius:50%;background:var(--gold)}.motif-dots span:nth-child(2){background:var(--accent);width:6px;height:6px}
+.week-selector{display:flex;align-items:center;gap:10px}
+.week-selector button{background:var(--surface);border:1px solid var(--border);color:var(--ink-mid);width:32px;height:32px;border-radius:6px;cursor:pointer;font-size:14px;transition:all .15s;display:flex;align-items:center;justify-content:center}.week-selector button:hover{border-color:var(--accent);color:var(--accent)}
+.week-label{font-family:'Syne',sans-serif;font-weight:600;font-size:13px;color:var(--ink);min-width:200px;text-align:center}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 18px;border-radius:6px;font-family:'Syne',sans-serif;font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:1px;cursor:pointer;transition:all .2s;border:1px solid transparent;text-decoration:none}
+.btn-primary{background:var(--accent);color:#fff;border-color:var(--accent)}.btn-primary:hover{background:var(--accent-light)}
+.btn-secondary{background:var(--surface);color:var(--ink-mid);border-color:var(--border)}.btn-secondary:hover{border-color:var(--accent);color:var(--accent)}
+.btn-gold{background:var(--gold);color:#fff;border-color:var(--gold)}.btn-gold:hover{background:var(--gold-light)}
+.btn-green{background:var(--accent-dim);color:var(--accent);border-color:var(--accent-dim2)}.btn-green:hover{background:var(--accent-dim2)}
+.btn-sm{padding:5px 12px;font-size:10px}
+.icon-btn{background:none;border:1px solid var(--border-light);width:30px;height:30px;border-radius:6px;cursor:pointer;font-size:12px;color:var(--ink-light);display:flex;align-items:center;justify-content:center;transition:all .15s}.icon-btn:hover{border-color:var(--accent);color:var(--accent)}.icon-btn.danger:hover{border-color:var(--red);color:var(--red)}
+.kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:32px}
+.kpi-card{background:var(--surface);border:1px solid var(--border-light);border-radius:8px;padding:22px 20px;position:relative;overflow:hidden;transition:border-color .2s,box-shadow .2s;box-shadow:0 1px 3px var(--shadow)}.kpi-card:hover{border-color:var(--border);box-shadow:0 4px 12px var(--shadow-md)}.kpi-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}.kpi-card.k-accent::before{background:var(--accent)}.kpi-card.k-gold::before{background:var(--gold)}.kpi-card.k-red::before{background:var(--red)}.kpi-card.k-blue::before{background:var(--blue)}
+.kpi-icon{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px;margin-bottom:12px}
+.kpi-card.k-accent .kpi-icon{background:var(--accent-dim);color:var(--accent)}.kpi-card.k-gold .kpi-icon{background:var(--gold-dim);color:var(--gold)}.kpi-card.k-red .kpi-icon{background:var(--red-dim);color:var(--red)}.kpi-card.k-blue .kpi-icon{background:var(--blue-dim);color:var(--blue)}
+.kpi-label{font-size:10px;text-transform:uppercase;letter-spacing:1.5px;color:var(--ink-light);margin-bottom:8px;font-weight:500}
+.kpi-value{font-family:'Syne',sans-serif;font-weight:800;font-size:32px;line-height:1;margin-bottom:4px}
+.kpi-card.k-accent .kpi-value{color:var(--accent)}.kpi-card.k-gold .kpi-value{color:var(--gold)}.kpi-card.k-red .kpi-value{color:var(--red)}.kpi-card.k-blue .kpi-value{color:var(--blue)}
+.kpi-note{font-size:11px;color:var(--ink-faint)}
+.filter-bar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:16px}
+.filter-btn{background:var(--surface);border:1px solid var(--border-light);color:var(--ink-light);padding:6px 14px;border-radius:20px;font-size:10px;font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:1px;cursor:pointer;transition:all .15s}.filter-btn:hover,.filter-btn.active{border-color:var(--accent);color:var(--accent);background:var(--accent-dim)}
+.table-wrap{border:1px solid var(--border-light);border-radius:8px;overflow:hidden;box-shadow:0 1px 3px var(--shadow);margin-bottom:24px}
+table{width:100%;border-collapse:collapse;font-size:12px}thead{background:var(--bg-warm)}
+th{font-family:'Syne',sans-serif;font-weight:600;font-size:10px;text-transform:uppercase;letter-spacing:1.5px;color:var(--ink-light);padding:14px 16px;text-align:left;white-space:nowrap;border-bottom:1px solid var(--border)}
+td{padding:14px 16px;border-bottom:1px solid var(--border-light);vertical-align:middle}tbody tr{transition:background .15s}tbody tr:hover{background:var(--surface-hover)}tbody tr:last-child td{border-bottom:none}
+.member-cell{display:flex;align-items:center;gap:10px}
+.avatar{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-weight:700;font-size:11px;color:#fff;flex-shrink:0}
+.member-name{font-weight:500}.member-role{font-size:10px;color:var(--ink-light)}
+.status-badge{display:inline-flex;align-items:center;gap:5px;padding:4px 12px;border-radius:20px;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.8px}.status-badge.submitted{background:var(--accent-dim);color:var(--accent)}.status-badge.pending{background:var(--gold-dim2);color:var(--gold)}
+.status-dot{width:6px;height:6px;border-radius:50%}.status-badge.submitted .status-dot{background:var(--accent)}.status-badge.pending .status-dot{background:var(--gold)}
+.compliance-bar-wrap{display:flex;align-items:center;gap:8px}.compliance-bar{flex:1;height:6px;background:var(--surface-alt);border-radius:3px;overflow:hidden;max-width:80px}.compliance-bar-fill{height:100%;border-radius:3px;transition:width .6s ease}.compliance-pct{font-family:'Syne',sans-serif;font-weight:700;font-size:12px;min-width:36px}
+.time-badge{font-size:11px;color:var(--ink-light);font-family:'DM Mono',monospace}.time-badge.early{color:var(--accent)}
+.expand-row{display:none}.expand-row.open{display:table-row}.expand-cell{background:var(--bg-warm);padding:0!important}.expand-inner{padding:20px 24px}.expand-inner h4{font-family:'Syne',sans-serif;font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:1.5px;color:var(--accent);margin-bottom:10px}
+.update-text{font-size:12px;color:var(--ink-mid);line-height:1.7;white-space:pre-line;background:var(--surface);border:1px solid var(--border-light);border-radius:6px;padding:16px 18px}
+.expand-btn{background:none;border:1px solid var(--border-light);color:var(--ink-light);width:26px;height:26px;border-radius:6px;cursor:pointer;font-size:10px;transition:all .15s;display:flex;align-items:center;justify-content:center}.expand-btn:hover{border-color:var(--accent);color:var(--accent)}.expand-btn.open{background:var(--accent-dim);border-color:var(--accent);color:var(--accent);transform:rotate(180deg)}
+.charts-grid{display:grid;grid-template-columns:5fr 3fr;gap:16px;margin-bottom:32px}
+.chart-card{background:var(--surface);border:1px solid var(--border-light);border-radius:8px;padding:24px;box-shadow:0 1px 3px var(--shadow)}.chart-card h3{font-family:'Syne',sans-serif;font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:1.5px;color:var(--ink-light);margin-bottom:20px}
+.bar-chart{display:flex;align-items:flex-end;gap:14px;height:160px;padding-top:8px}.bar-group{flex:1;display:flex;flex-direction:column;align-items:center;gap:8px;height:100%;justify-content:flex-end}.bar{width:100%;max-width:40px;border-radius:4px 4px 0 0;position:relative;transition:height .6s ease}.bar-label{font-size:9px;color:var(--ink-faint);text-transform:uppercase;letter-spacing:.5px}.bar-val{position:absolute;top:-20px;left:50%;transform:translateX(-50%);font-family:'Syne',sans-serif;font-weight:700;font-size:11px;white-space:nowrap}
+.donut-wrap{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px}.donut-svg{width:140px;height:140px}.donut-center{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center}.donut-center-val{font-family:'Syne',sans-serif;font-weight:800;font-size:28px;color:var(--ink)}.donut-center-label{font-size:9px;text-transform:uppercase;letter-spacing:1.5px;color:var(--ink-faint)}.donut-legend{display:flex;gap:16px;flex-wrap:wrap;justify-content:center}.donut-legend-item{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--ink-mid)}.donut-legend-dot{width:8px;height:8px;border-radius:2px;flex-shrink:0}
+.streak-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;margin-top:20px}.streak-card{background:var(--surface);border:1px solid var(--border-light);border-radius:8px;padding:18px;display:flex;align-items:center;gap:14px;box-shadow:0 1px 3px var(--shadow)}.streak-icon{font-size:18px;width:42px;height:42px;display:flex;align-items:center;justify-content:center;border-radius:10px;flex-shrink:0}.streak-icon.fire{background:var(--gold-dim)}.streak-icon.trophy{background:var(--accent-dim)}.streak-info h4{font-family:'Syne',sans-serif;font-weight:700;font-size:18px;line-height:1;margin-bottom:3px}.streak-info span{font-size:10px;color:var(--ink-light)}
+.perf-section{margin-bottom:32px}
+.export-hero{background:var(--surface);border:1px solid var(--border-light);border-radius:8px;padding:32px;box-shadow:0 1px 3px var(--shadow);margin-bottom:24px;display:grid;grid-template-columns:1fr 1fr;gap:32px;align-items:center}
+.export-hero-left h3{font-family:'Instrument Serif',serif;font-size:24px;font-weight:400;margin-bottom:8px}.export-hero-left p{color:var(--ink-mid);font-size:12px;line-height:1.7;max-width:400px}
+.export-cards{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px}
+.export-action-card{background:var(--surface);border:1px solid var(--border-light);border-radius:8px;padding:28px;box-shadow:0 1px 3px var(--shadow);text-align:center;transition:all .2s;cursor:pointer;position:relative;overflow:hidden}.export-action-card:hover{border-color:var(--accent);box-shadow:0 4px 16px var(--shadow-md);transform:translateY(-2px)}
+.export-action-card .big-icon{font-size:36px;margin-bottom:12px;display:block}
+.export-action-card h4{font-family:'Syne',sans-serif;font-weight:700;font-size:14px;margin-bottom:6px}.export-action-card p{font-size:11px;color:var(--ink-mid);line-height:1.6}
+.export-action-card .badge-corner{position:absolute;top:12px;right:12px;font-size:9px;text-transform:uppercase;letter-spacing:1px;padding:3px 8px;border-radius:10px;font-weight:600}.badge-corner.csv{background:var(--accent-dim);color:var(--accent)}.badge-corner.xls{background:var(--gold-dim);color:var(--gold)}
+.export-settings{background:var(--surface);border:1px solid var(--border-light);border-radius:8px;padding:28px;box-shadow:0 1px 3px var(--shadow);margin-bottom:24px}.export-settings h3{font-family:'Syne',sans-serif;font-weight:700;font-size:14px;margin-bottom:4px}.export-settings>p{color:var(--ink-mid);font-size:12px;margin-bottom:20px}
+.export-filter-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:16px}
+.range-row{display:none}.range-row.show{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.export-stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px}
+.export-stat-card{background:var(--bg-warm);border-radius:8px;padding:18px;text-align:center}.export-stat-val{font-family:'Syne',sans-serif;font-weight:800;font-size:28px;line-height:1;margin-bottom:4px}.export-stat-label{font-size:9px;text-transform:uppercase;letter-spacing:1.5px;color:var(--ink-light)}
+.export-preview{margin-top:24px}.export-preview h4{font-family:'Syne',sans-serif;font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:1.5px;color:var(--ink-light);margin-bottom:12px}
+.mini-table-wrap{border:1px solid var(--border-light);border-radius:6px;overflow:hidden;max-height:300px;overflow-y:auto}.mini-table-wrap table{font-size:11px}.mini-table-wrap th{padding:10px 12px;font-size:9px;position:sticky;top:0;z-index:2;background:var(--bg-warm)}.mini-table-wrap td{padding:10px 12px}.truncate-cell{max-width:180px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.info-box{background:var(--accent-dim);border-left:3px solid var(--accent);padding:14px 18px;margin:16px 0;font-size:12px;color:var(--ink-mid);border-radius:0 8px 8px 0;line-height:1.7}.info-box strong{color:var(--accent)}.gold-box{background:var(--gold-dim);border-left:3px solid var(--gold);padding:14px 18px;margin:16px 0;font-size:12px;color:var(--ink-mid);border-radius:0 8px 8px 0;line-height:1.7}.gold-box strong{color:var(--gold)}
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(26,23,20,.4);backdrop-filter:blur(4px);z-index:200;align-items:center;justify-content:center}.modal-overlay.show{display:flex}
+.modal{background:var(--surface);border-radius:12px;width:90%;max-width:560px;max-height:85vh;overflow-y:auto;box-shadow:0 20px 60px rgba(26,23,20,.2);border:1px solid var(--border)}
+.modal-header{padding:24px 28px 0;display:flex;justify-content:space-between;align-items:center}.modal-header h3{font-family:'Syne',sans-serif;font-weight:700;font-size:16px}
+.modal-close{background:none;border:1px solid var(--border-light);width:30px;height:30px;border-radius:6px;cursor:pointer;font-size:14px;color:var(--ink-light);display:flex;align-items:center;justify-content:center;transition:all .15s}.modal-close:hover{border-color:var(--red);color:var(--red)}
+.modal-body{padding:20px 28px 28px}.modal-footer{padding:0 28px 24px;display:flex;gap:8px;justify-content:flex-end}
+.field-group{margin-bottom:16px}.field-group label{display:block;font-size:10px;text-transform:uppercase;letter-spacing:1.5px;color:var(--ink-light);margin-bottom:6px;font-weight:500;font-family:'Syne',sans-serif}
+.field-group input,.field-group textarea,.field-group select{width:100%;padding:10px 14px;border:1px solid var(--border);border-radius:6px;font-family:'DM Mono',monospace;font-size:12px;color:var(--ink);background:var(--bg);transition:border-color .15s;outline:none}
+.field-group input:focus,.field-group textarea:focus,.field-group select:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-dim)}
+.field-group textarea{resize:vertical;min-height:120px;line-height:1.7}.field-group input::placeholder,.field-group textarea::placeholder{color:var(--ink-faint)}
+.field-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.team-list{display:flex;flex-direction:column;gap:8px;margin-top:16px}
+.team-row{display:grid;grid-template-columns:42px 1fr 1.5fr auto auto;gap:12px;align-items:center;background:var(--surface);border:1px solid var(--border-light);border-radius:8px;padding:14px 18px;transition:border-color .2s,box-shadow .2s;box-shadow:0 1px 2px var(--shadow)}.team-row:hover{border-color:var(--border);box-shadow:0 2px 8px var(--shadow-md)}.team-row .avatar{width:38px;height:38px;font-size:12px}
+.team-name-val{font-weight:500;font-size:13px}.team-role-val{font-size:10px;color:var(--ink-light)}.team-email-val{font-size:11px;color:var(--ink-mid)}.team-actions{display:flex;gap:6px}
+.setup-wizard{background:var(--surface);border:2px dashed var(--border);border-radius:12px;padding:40px;max-width:520px;margin:60px auto;text-align:center}
+.setup-wizard h3{font-family:'Syne',sans-serif;font-weight:700;font-size:18px;margin-bottom:8px}.setup-wizard p{color:var(--ink-mid);font-size:12px;margin-bottom:20px;line-height:1.7}
+.spinner{display:inline-block;width:16px;height:16px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .6s linear infinite;margin-right:6px;vertical-align:middle}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+.animate-in{opacity:0;animation:fadeUp .4s ease forwards}.animate-in:nth-child(1){animation-delay:.05s}.animate-in:nth-child(2){animation-delay:.1s}.animate-in:nth-child(3){animation-delay:.15s}.animate-in:nth-child(4){animation-delay:.2s}
+#toast{display:none;position:fixed;bottom:24px;right:24px;z-index:300;background:var(--accent);color:#fff;padding:14px 22px;border-radius:8px;font-size:12px;font-family:'Syne',sans-serif;font-weight:600;box-shadow:0 8px 24px rgba(0,0,0,.15)}#toast.show{display:block;animation:fadeUp .3s ease}
+@media(max-width:1024px){.kpi-row{grid-template-columns:repeat(2,1fr)}.charts-grid{grid-template-columns:1fr}.team-row{grid-template-columns:42px 1fr auto}.team-email-val{display:none}.export-hero{grid-template-columns:1fr}.export-cards{grid-template-columns:1fr}.export-filter-row{grid-template-columns:1fr}.export-stats-row{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:768px){.topbar{padding:0 16px}.topbar-nav a{padding:16px 10px;font-size:10px;letter-spacing:.5px}.section-container{padding:24px 16px}.field-row{grid-template-columns:1fr}.team-row{grid-template-columns:36px 1fr auto;gap:8px}}
+@media(max-width:480px){.kpi-row{grid-template-columns:1fr}.export-stats-row{grid-template-columns:1fr}.topbar-nav{overflow-x:auto}}
+</style>
+</head>
+<body>
+
+<div class="wrapper">
+<div class="motif-bar"></div>
+
+<!-- CONNECTION STATUS -->
+<div class="conn-bar local" id="connBar">&#9679; LOCAL MODE — Data saved in this browser only. Configure API in Team tab for shared access.</div>
+
+<nav class="topbar">
+  <div class="topbar-brand"><div class="brand-icon"></div><div><div class="brand-text">Stellar Seeds</div><div class="brand-sub">Priority Tracker</div></div></div>
+  <div class="topbar-nav">
+    <a href="#" class="active" onclick="switchSection('dashboard',this);return false;">Dashboard</a>
+    <a href="#" onclick="switchSection('export',this);return false;">Export</a>
+    <a href="#" onclick="switchSection('performance',this);return false;">Performance</a>
+    <a href="#" onclick="switchSection('team-mgmt',this);return false;">Team</a>
+  </div>
+  <div class="topbar-date" id="currentDate"></div>
+</nav>
+
+<!-- DASHBOARD -->
+<div id="dashboard" class="page-section active">
+<div class="section-container">
+  <div class="section-header">
+    <div><div class="motif-dots"><span></span><span></span><span></span></div><div class="section-tag">Weekly Overview</div><h2>Priority Dashboard</h2></div>
+    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+      <div class="week-selector"><button onclick="changeWeek(-1)">&larr;</button><div class="week-label" id="weekLabel"></div><button onclick="changeWeek(1)">&rarr;</button></div>
+      <button class="btn btn-primary" onclick="openSubmitModal()">&#9998; Submit Update</button>
+    </div>
+  </div>
+  <div class="kpi-row">
+    <div class="kpi-card k-accent animate-in"><div class="kpi-icon">&#127793;</div><div class="kpi-label">Team</div><div class="kpi-value" id="kpiTotal">0</div><div class="kpi-note">Active members</div></div>
+    <div class="kpi-card k-gold animate-in"><div class="kpi-icon">&#10003;</div><div class="kpi-label">Submitted</div><div class="kpi-value" id="kpiSubmitted">0</div><div class="kpi-note" id="kpiSubmittedNote">This week</div></div>
+    <div class="kpi-card k-red animate-in"><div class="kpi-icon">&#9888;</div><div class="kpi-label">Pending</div><div class="kpi-value" id="kpiPending">0</div><div class="kpi-note">Awaiting</div></div>
+    <div class="kpi-card k-blue animate-in"><div class="kpi-icon">&#128200;</div><div class="kpi-label">Compliance</div><div class="kpi-value" id="kpiCompliance">0%</div><div class="kpi-note" id="kpiComplianceNote">This week</div></div>
+  </div>
+  <div class="filter-bar"><button class="filter-btn active" onclick="filterTable('all',this)">All</button><button class="filter-btn" onclick="filterTable('submitted',this)">Submitted</button><button class="filter-btn" onclick="filterTable('pending',this)">Pending</button></div>
+  <div class="table-wrap"><table><thead><tr><th style="width:36px;"></th><th>Team Member</th><th>Status</th><th>Submitted</th><th>Compliance</th><th></th></tr></thead><tbody id="dashTableBody"></tbody></table></div>
+  <div class="info-box"><strong>Shared Mode:</strong> When connected to the API, all team members see the same data. Submissions sync in real-time. <strong>Local Mode:</strong> Data is stored only in this browser — useful for testing before deployment.</div>
+</div>
+</div>
+
+<!-- EXPORT -->
+<div id="export" class="page-section">
+<div class="section-container">
+  <div class="section-header"><div><div class="motif-dots"><span></span><span></span><span></span></div><div class="section-tag">Data Export</div><h2>Export to Excel</h2></div></div>
+  <div class="export-hero">
+    <div class="export-hero-left"><h3>Download All Submitted Updates</h3><p>Extract all priority submissions as a spreadsheet. Choose scope, filter by date, preview, then download CSV or XLS.</p></div>
+    <div class="export-stats-row" style="grid-template-columns:1fr 1fr;margin:0;"><div class="export-stat-card"><div class="export-stat-val" style="color:var(--accent);" id="heroSubs">0</div><div class="export-stat-label">Total Submissions</div></div><div class="export-stat-card"><div class="export-stat-val" style="color:var(--gold);" id="heroWeeks">0</div><div class="export-stat-label">Weeks</div></div></div>
+  </div>
+  <div class="export-cards">
+    <div class="export-action-card" onclick="quickExportCSV()"><span class="badge-corner csv">CSV</span><span class="big-icon">&#128228;</span><h4>Quick Export CSV</h4><p>All submissions, all weeks. Opens in Excel, Google Sheets, Numbers.</p><button class="btn btn-primary" style="margin-top:14px;">&#8681; Download CSV</button></div>
+    <div class="export-action-card" onclick="quickExportXLS()"><span class="badge-corner xls">XLS</span><span class="big-icon">&#128218;</span><h4>Quick Export Excel</h4><p>Formatted .xls with styled headers, alternating rows, color-coded status.</p><button class="btn btn-gold" style="margin-top:14px;">&#8681; Download XLS</button></div>
+  </div>
+  <div class="export-settings">
+    <h3>&#9881; Custom Export</h3><p>Filter by date range, members, and format before downloading.</p>
+    <div class="export-filter-row">
+      <div class="field-group" style="margin-bottom:0;"><label>Date Range</label><select id="exportScope" onchange="document.getElementById('rangeRow').classList.toggle('show',this.value==='range');refreshPreview();"><option value="all">All Weeks</option><option value="current">Current Week</option><option value="range">Custom Range</option></select></div>
+      <div class="field-group" style="margin-bottom:0;"><label>Members</label><select id="exportMembers" onchange="refreshPreview()"><option value="all">All Active</option><option value="submitted">Submitted Only</option><option value="everyone">All (incl. Inactive)</option></select></div>
+      <div class="field-group" style="margin-bottom:0;"><label>Format</label><select id="exportFormat"><option value="csv">CSV</option><option value="xls">Excel</option></select></div>
+    </div>
+    <div class="range-row" id="rangeRow"><div class="field-group" style="margin-bottom:0;"><label>From</label><input type="date" id="exportFrom" onchange="refreshPreview()"></div><div class="field-group" style="margin-bottom:0;"><label>To</label><input type="date" id="exportTo" onchange="refreshPreview()"></div></div>
+    <div style="margin-top:16px;display:flex;gap:10px;"><button class="btn btn-primary" onclick="runCustomExport()">&#8681; Download</button><button class="btn btn-secondary" onclick="refreshPreview()">&#8634; Preview</button></div>
+  </div>
+  <div class="export-stats-row"><div class="export-stat-card"><div class="export-stat-val" id="prevRows">0</div><div class="export-stat-label">Rows</div></div><div class="export-stat-card"><div class="export-stat-val" id="prevSub" style="color:var(--accent)">0</div><div class="export-stat-label">Submitted</div></div><div class="export-stat-card"><div class="export-stat-val" id="prevMiss" style="color:var(--gold)">0</div><div class="export-stat-label">No Submission</div></div><div class="export-stat-card"><div class="export-stat-val" id="prevWks" style="color:var(--blue)">0</div><div class="export-stat-label">Weeks</div></div></div>
+  <div class="export-preview"><h4>Preview (first 15 rows)</h4><div class="mini-table-wrap"><table><thead><tr><th>Name</th><th>Role</th><th>Email</th><th>Week</th><th>Submitted</th><th>Priorities</th><th>Notes</th><th>Status</th><th>On Time</th></tr></thead><tbody id="previewBody"></tbody></table></div></div>
+  <div class="export-settings" style="margin-top:24px;"><h3>&#128209; Column Reference</h3><div class="table-wrap" style="margin:12px 0 0"><table><thead><tr><th>Column</th><th>Description</th></tr></thead><tbody><tr><td style="font-weight:500">Team Member</td><td style="color:var(--ink-mid)">Full name</td></tr><tr><td style="font-weight:500">Role</td><td style="color:var(--ink-mid)">Job title</td></tr><tr><td style="font-weight:500">Email</td><td style="color:var(--ink-mid)">Work email</td></tr><tr><td style="font-weight:500">Week Of</td><td style="color:var(--ink-mid)">Monday date of that week</td></tr><tr><td style="font-weight:500">Submitted At</td><td style="color:var(--ink-mid)">Date and time of submission</td></tr><tr><td style="font-weight:500">Priorities</td><td style="color:var(--ink-mid)">Full priority text</td></tr><tr><td style="font-weight:500">Notes</td><td style="color:var(--ink-mid)">Blockers or notes</td></tr><tr><td style="font-weight:500">Status</td><td style="color:var(--ink-mid)">Submitted / No Submission</td></tr><tr><td style="font-weight:500">On Time</td><td style="color:var(--ink-mid)">Yes if Monday, No otherwise</td></tr></tbody></table></div></div>
+</div>
+</div>
+
+<!-- PERFORMANCE -->
+<div id="performance" class="page-section">
+<div class="section-container">
+  <div class="section-header"><div><div class="motif-dots"><span></span><span></span><span></span></div><div class="section-tag">Analytics</div><h2>Performance Metrics</h2></div></div>
+  <div class="charts-grid"><div class="chart-card"><h3>Weekly Compliance Trend</h3><div class="bar-chart" id="complianceChart"></div></div><div class="chart-card"><h3>Current Week</h3><div class="donut-wrap"><div style="position:relative;display:inline-block"><svg class="donut-svg" viewBox="0 0 42 42" id="donutSvg"><circle cx="21" cy="21" r="15.915" fill="none" stroke="var(--surface-alt)" stroke-width="3"/></svg><div class="donut-center"><div class="donut-center-val" id="donutVal">0%</div><div class="donut-center-label">Compliant</div></div></div><div class="donut-legend" id="donutLegend"></div></div></div></div>
+  <div class="perf-section"><div class="section-tag" style="margin-bottom:12px">Individual</div><div class="table-wrap"><table><thead><tr><th>Member</th><th>Weeks</th><th>On-Time</th><th>Late</th><th>Missed</th><th>Avg Time</th><th>Rate</th><th>Streak</th></tr></thead><tbody id="perfTableBody"></tbody></table></div></div>
+  <div class="section-tag" style="margin-bottom:8px">Streaks</div><div class="streak-grid" id="streakGrid"></div>
+</div>
+</div>
+
+<!-- TEAM MANAGEMENT -->
+<div id="team-mgmt" class="page-section">
+<div class="section-container">
+  <div class="section-header"><div><div class="motif-dots"><span></span><span></span><span></span></div><div class="section-tag">Team & Settings</div><h2>Manage Team & Connection</h2></div><button class="btn btn-primary" onclick="openAddMemberModal()">+ Add Member</button></div>
+
+  <!-- API CONFIGURATION -->
+  <div class="export-settings" style="margin-bottom:24px;border:2px solid var(--accent-dim2);">
+    <h3>&#128268; API Connection</h3>
+    <p>Connect to Power Automate so all team members share the same data. Leave blank for local-only mode (testing).</p>
+    <div class="field-row" style="max-width:600px;">
+      <div class="field-group" style="margin-bottom:0;"><label>GET Flow URL (read data)</label><input type="text" id="apiGetUrl" placeholder="https://prod-xx.logic.azure.com:443/workflows/..."></div>
+      <div class="field-group" style="margin-bottom:0;"><label>POST Flow URL (write data)</label><input type="text" id="apiPostUrl" placeholder="https://prod-xx.logic.azure.com:443/workflows/..."></div>
+    </div>
+    <div style="margin-top:12px;display:flex;gap:10px;">
+      <button class="btn btn-primary" onclick="saveApiConfig()">&#128268; Connect</button>
+      <button class="btn btn-secondary" onclick="testConnection()">&#9654; Test</button>
+      <button class="btn btn-secondary" onclick="clearApiConfig()">&#10005; Disconnect</button>
+    </div>
+    <div id="connTestResult" style="margin-top:10px;font-size:11px;"></div>
+  </div>
+
+  <p style="color:var(--ink-mid);margin-bottom:8px;max-width:640px;">Add, edit, or remove team members below. Changes reflect in the dashboard, exports, and automated emails.</p>
+  <div class="gold-box"><strong>Email flows:</strong> Emails below are used by Power Automate for Monday reminders, Tuesday follow-ups, and manager notifications.</div>
+  <div class="field-row" style="margin-bottom:20px;max-width:500px;"><div class="field-group"><label>Manager Email</label><input type="email" id="managerEmail" placeholder="manager@stellarSeeds.com" onchange="data.managerEmail=this.value;persistData()"></div></div>
+  <div class="team-list" id="teamList"></div>
+</div>
+</div>
+</div>
+
+<!-- MODALS -->
+<div class="modal-overlay" id="memberModal">
+<div class="modal">
+  <div class="modal-header"><h3 id="memberModalTitle">Add Member</h3><button class="modal-close" onclick="closeModal('memberModal')">&times;</button></div>
+  <div class="modal-body">
+    <div class="field-row"><div class="field-group"><label>Full Name</label><input type="text" id="mbrName"></div><div class="field-group"><label>Role</label><input type="text" id="mbrRole"></div></div>
+    <div class="field-group"><label>Email</label><input type="email" id="mbrEmail"></div>
+    <div class="field-group"><label>Status</label><select id="mbrStatus"><option value="active">Active</option><option value="inactive">Inactive</option></select></div>
+  </div>
+  <div class="modal-footer"><button class="btn btn-secondary" onclick="closeModal('memberModal')">Cancel</button><button class="btn btn-primary" onclick="saveMember()">Save</button></div>
+</div>
+</div>
+
+<div class="modal-overlay" id="submitModal">
+<div class="modal">
+  <div class="modal-header"><h3>Submit Weekly Update</h3><button class="modal-close" onclick="closeModal('submitModal')">&times;</button></div>
+  <div class="modal-body">
+    <div class="field-group"><label>Your Name</label><select id="submitName"></select></div>
+    <div class="field-group"><label>Week Of</label><input type="text" id="submitWeek" readonly></div>
+    <div class="field-group"><label>Priorities & Updates</label><textarea id="submitUpdate" placeholder="List your priorities, one per line..."></textarea></div>
+    <div class="field-group"><label>Notes / Blockers</label><textarea id="submitNotes" style="min-height:60px" placeholder="Optional"></textarea></div>
+  </div>
+  <div class="modal-footer"><button class="btn btn-secondary" onclick="closeModal('submitModal')">Cancel</button><button class="btn btn-gold" onclick="submitPriority()">&#10003; Submit</button></div>
+</div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+// =============================================
+//  CONFIG & STORAGE
+// =============================================
+const LS_KEY='ss_tracker_v3';
+const DEFAULT={
+  managerEmail:'manager@stellarSeeds.com',
+  members:[
+    {id:1,name:'Maria Santos',role:'Seed Production Lead',email:'maria@stellarSeeds.com',color:'#2d6a3f',active:true},
+    {id:2,name:'James Lee',role:'Field Operations',email:'james@stellarSeeds.com',color:'#2a6fa8',active:true},
+    {id:3,name:'Aiko Tanaka',role:'Quality Assurance',email:'aiko@stellarSeeds.com',color:'#c8982c',active:true},
+    {id:4,name:'Carlos Rivera',role:'Logistics Coordinator',email:'carlos@stellarSeeds.com',color:'#7b4dbf',active:true},
+    {id:5,name:'Priya Patel',role:'Research Analyst',email:'priya@stellarSeeds.com',color:'#c0392b',active:true},
+    {id:6,name:'Sarah Chen',role:'Sales Manager',email:'sarah@stellarSeeds.com',color:'#d4861a',active:true},
+    {id:7,name:'Tom Nguyen',role:'Nursery Supervisor',email:'tom@stellarSeeds.com',color:'#1a8a7a',active:true},
+    {id:8,name:'David Kim',role:'Finance Officer',email:'david@stellarSeeds.com',color:'#8a5a2a',active:true}
+  ],
+  submissions:{},
+  nextId:9,
+  apiUrl_GET:'',
+  apiUrl_POST:''
+};
+let data;
+let isAPI=false;
+
+// =============================================
+//  LOAD — try API first, fall back to local
+// =============================================
+async function initApp(){
+  const saved=localStorage.getItem(LS_KEY);
+  data=saved?JSON.parse(saved):structuredClone(DEFAULT);
+  if(!data.apiUrl_GET)data.apiUrl_GET='';
+  if(!data.apiUrl_POST)data.apiUrl_POST='';
+  if(!data.nextId)data.nextId=9;
+  if(!data.managerEmail)data.managerEmail=DEFAULT.managerEmail;
+
+  document.getElementById('apiGetUrl').value=data.apiUrl_GET||'';
+  document.getElementById('apiPostUrl').value=data.apiUrl_POST||'';
+  document.getElementById('managerEmail').value=data.managerEmail||'';
+
+  if(data.apiUrl_GET){
+    await loadFromAPI();
+  }
+  updateConnBar();
+  updateWeekLabel();
+  renderDashboard();
+  updateHeroStats();
+}
+
+async function loadFromAPI(){
+  try{
+    const r=await fetch(data.apiUrl_GET);
+    if(!r.ok)throw new Error('HTTP '+r.status);
+    const apiData=await r.json();
+    if(apiData.members) data.members=apiData.members;
+    if(apiData.submissions) data.submissions=apiData.submissions;
+    isAPI=true;
+    persistLocal();
+  }catch(e){
+    console.error('API load failed:',e);
+    isAPI=false;
+    showToast('API connection failed. Using local data.');
+  }
+}
+
+function persistLocal(){localStorage.setItem(LS_KEY,JSON.stringify(data));}
+function persistData(){persistLocal();}
+
+function updateConnBar(){
+  const bar=document.getElementById('connBar');
+  if(isAPI){
+    bar.className='conn-bar connected';
+    bar.innerHTML='&#9679; CONNECTED — Shared mode. All team members see the same data.';
+  }else if(data.apiUrl_GET){
+    bar.className='conn-bar error';
+    bar.innerHTML='&#9679; CONNECTION ERROR — Could not reach API. Using local data.';
+  }else{
+    bar.className='conn-bar local';
+    bar.innerHTML='&#9679; LOCAL MODE — Data saved in this browser only. Configure API in Team tab for shared access.';
+  }
+}
+
+// =============================================
+//  API CONFIG
+// =============================================
+function saveApiConfig(){
+  data.apiUrl_GET=document.getElementById('apiGetUrl').value.trim();
+  data.apiUrl_POST=document.getElementById('apiPostUrl').value.trim();
+  persistLocal();
+  if(data.apiUrl_GET){
+    loadFromAPI().then(()=>{updateConnBar();renderDashboard();showToast('API configured. Reloading data...');});
+  }else{isAPI=false;updateConnBar();showToast('Saved. Running in local mode.');}
+}
+
+function clearApiConfig(){
+  data.apiUrl_GET='';data.apiUrl_POST='';
+  document.getElementById('apiGetUrl').value='';
+  document.getElementById('apiPostUrl').value='';
+  isAPI=false;
+  persistLocal();updateConnBar();
+  showToast('Disconnected. Running in local mode.');
+}
+
+async function testConnection(){
+  const el=document.getElementById('connTestResult');
+  const url=document.getElementById('apiGetUrl').value.trim();
+  if(!url){el.innerHTML='<span style="color:var(--red)">Enter a GET URL first.</span>';return;}
+  el.innerHTML='<span class="spinner"></span> Testing...';
+  try{
+    const r=await fetch(url);
+    if(!r.ok)throw new Error('HTTP '+r.status);
+    const d=await r.json();
+    el.innerHTML='<span style="color:var(--accent)">&#10003; Connected! Got '+(d.members?d.members.length:0)+' members, '+(d.submissions?Object.keys(d.submissions).length:0)+' weeks.</span>';
+  }catch(e){
+    el.innerHTML='<span style="color:var(--red)">&#10007; Failed: '+e.message+'</span>';
+  }
+}
+
+// =============================================
+//  API HELPERS (write operations)
+// =============================================
+async function apiPost(action,payload){
+  if(!isAPI||!data.apiUrl_POST)return;
+  try{
+    await fetch(data.apiUrl_POST,{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({action,data:payload})
+    });
+  }catch(e){console.error('API post failed:',e);}
+}
+
+async function apiReload(){
+  if(!isAPI||!data.apiUrl_GET)return;
+  try{
+    const r=await fetch(data.apiUrl_GET);
+    const d=await r.json();
+    if(d.members)data.members=d.members;
+    if(d.submissions)data.submissions=d.submissions;
+    persistLocal();
+  }catch(e){console.error('API reload failed:',e);}
+}
+
+// =============================================
+//  WEEK HELPERS
+// =============================================
+const now=new Date();
+const monBase=new Date(now);monBase.setDate(now.getDate()-((now.getDay()+6)%7));monBase.setHours(0,0,0,0);
+function wkKey(d){return d.toISOString().slice(0,10);}
+let curWeek=new Date(monBase),wkOff=0;
+function updateWeekLabel(){const e=new Date(curWeek);e.setDate(e.getDate()+4);const l=curWeek.toLocaleDateString('en-US',{month:'long',day:'numeric'})+' \u2013 '+e.toLocaleDateString('en-US',{day:'numeric',year:'numeric'});document.getElementById('weekLabel').textContent=l;document.getElementById('submitWeek').value=l;}
+function changeWeek(d){wkOff+=d;curWeek=new Date(monBase);curWeek.setDate(curWeek.getDate()+wkOff*7);updateWeekLabel();renderDashboard();}
+
+// =============================================
+//  NAV
+// =============================================
+function switchSection(id,el){
+  document.querySelectorAll('.page-section').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  document.querySelectorAll('.topbar-nav a').forEach(a=>a.classList.remove('active'));
+  if(el)el.classList.add('active');
+  if(id==='dashboard')renderDashboard();
+  if(id==='performance')renderPerformance();
+  if(id==='team-mgmt')renderTeamManagement();
+  if(id==='export'){updateHeroStats();refreshPreview();}
+}
+
+// =============================================
+//  MODALS
+// =============================================
+function openModal(id){document.getElementById(id).classList.add('show');}
+function closeModal(id){document.getElementById(id).classList.remove('show');}
+function openSubmitModal(){
+  const s=document.getElementById('submitName');s.innerHTML='<option value="">\u2014 Select \u2014</option>';
+  data.members.filter(m=>m.active).forEach(m=>{s.innerHTML+='<option value="'+m.id+'">'+m.name+'</option>';});
+  document.getElementById('submitUpdate').value='';document.getElementById('submitNotes').value='';
+  updateWeekLabel();openModal('submitModal');
+}
+let editId=null;
+function openAddMemberModal(){editId=null;document.getElementById('memberModalTitle').textContent='Add Member';['mbrName','mbrRole','mbrEmail'].forEach(id=>document.getElementById(id).value='');document.getElementById('mbrStatus').value='active';openModal('memberModal');}
+function openEditMemberModal(id){editId=id;const m=data.members.find(x=>x.id===id);if(!m)return;document.getElementById('memberModalTitle').textContent='Edit Member';document.getElementById('mbrName').value=m.name;document.getElementById('mbrRole').value=m.role;document.getElementById('mbrEmail').value=m.email;document.getElementById('mbrStatus').value=m.active?'active':'inactive';openModal('memberModal');}
+
+async function saveMember(){
+  const name=document.getElementById('mbrName').value.trim(),role=document.getElementById('mbrRole').value.trim(),email=document.getElementById('mbrEmail').value.trim(),active=document.getElementById('mbrStatus').value==='active';
+  if(!name||!email){showToast('Fill name and email.');return;}
+  const colors=['#2d6a3f','#2a6fa8','#c8982c','#7b4dbf','#c0392b','#d4861a','#1a8a7a','#8a5a2a','#3d8b54','#5485e8'];
+  if(editId){const m=data.members.find(x=>x.id===editId);if(m){m.name=name;m.role=role;m.email=email;m.active=active;}await apiPost('updateMember',{id:editId,name,role,email,active});showToast('Updated.');}
+  else{const newM={id:data.nextId++,name,role,email,active,color:colors[data.members.length%colors.length]};data.members.push(newM);await apiPost('addMember',newM);showToast('Added.');}
+  persistLocal();closeModal('memberModal');renderTeamManagement();renderDashboard();
+}
+
+async function deleteMember(id){
+  if(!confirm('Remove this member?'))return;
+  data.members=data.members.filter(m=>m.id!==id);
+  await apiPost('deleteMember',{id});
+  persistLocal();renderTeamManagement();renderDashboard();showToast('Removed.');
+}
+
+// =============================================
+//  SUBMIT PRIORITY
+// =============================================
+async function submitPriority(){
+  const mid=parseInt(document.getElementById('submitName').value);
+  const update=document.getElementById('submitUpdate').value.trim();
+  const notes=document.getElementById('submitNotes').value.trim();
+  if(!mid){showToast('Select your name.');return;}
+  if(!update){showToast('Enter your priorities.');return;}
+  const wk=wkKey(curWeek);if(!data.submissions[wk])data.submissions[wk]={};
+  const mem=data.members.find(m=>m.id===mid);
+  const dt=new Date().toISOString();
+  const payload={WeekKey:wk,MemberID:mid,MemberName:mem?mem.name:'',Priorities:update,Notes:notes,SubmittedAt:dt,OnTime:new Date(dt).getDay()===1};
+  data.submissions[wk][mid]={update,notes,submittedAt:dt};
+  await apiPost('saveSubmission',payload);
+  persistLocal();closeModal('submitModal');renderDashboard();showToast('Submitted!');
+}
+
+// =============================================
+//  DASHBOARD RENDER
+// =============================================
+function renderDashboard(){
+  const wk=wkKey(curWeek),subs=data.submissions[wk]||{},active=data.members.filter(m=>m.active),submitted=active.filter(m=>subs[m.id]).length,pending=active.length-submitted,comp=active.length>0?Math.round((submitted/active.length)*100):0;
+  document.getElementById('kpiTotal').textContent=active.length;
+  document.getElementById('kpiSubmitted').textContent=submitted;
+  document.getElementById('kpiPending').textContent=pending;
+  document.getElementById('kpiCompliance').textContent=comp+'%';
+  document.getElementById('kpiComplianceNote').textContent=submitted+' of '+active.length;
+  renderDashTable(subs,active);
+}
+
+function renderDashTable(subs,activeMembers){
+  const tbody=document.getElementById('dashTableBody');tbody.innerHTML='';
+  activeMembers.forEach((m,i)=>{
+    const sub=subs[m.id],status=sub?'submitted':'pending',ini=m.name.split(' ').map(w=>w[0]).join('').toUpperCase();
+    let tw=0,sw=0;Object.keys(data.submissions).forEach(w=>{tw++;if(data.submissions[w][m.id])sw++;});
+    const comp=tw>0?Math.round((sw/tw)*100):0,cc=comp>=80?'var(--accent)':comp>=50?'var(--gold)':'var(--red)';
+    const tr=document.createElement('tr');tr.style.cursor=sub?'pointer':'default';
+    if(sub)tr.onclick=()=>{const r=document.getElementById('exp-'+i),b=document.getElementById('btn-exp-'+i);if(r)r.classList.toggle('open');if(b)b.classList.toggle('open');};
+    const st=sub?fmtTime(sub.submittedAt):'\u2014',early=sub&&new Date(sub.submittedAt).getDay()===1;
+    tr.innerHTML='<td>'+(sub?'<button class="expand-btn" id="btn-exp-'+i+'">&#9660;</button>':'')+'</td><td><div class="member-cell"><div class="avatar" style="background:'+m.color+'">'+ini+'</div><div><div class="member-name">'+m.name+'</div><div class="member-role">'+m.role+'</div></div></div></td><td><span class="status-badge '+status+'"><span class="status-dot"></span>'+(status==='submitted'?'Submitted':'Pending')+'</span></td><td class="time-badge '+(early?'early':'')+'">'+st+'</td><td><div class="compliance-bar-wrap"><div class="compliance-bar"><div class="compliance-bar-fill" style="width:'+comp+'%;background:'+cc+';"></div></div><span class="compliance-pct" style="color:'+cc+'">'+comp+'%</span></div></td><td></td>';
+    tbody.appendChild(tr);
+    if(sub){const et=document.createElement('tr');et.className='expand-row';et.id='exp-'+i;et.innerHTML='<td colspan="6" class="expand-cell"><div class="expand-inner"><h4>Update</h4><div class="update-text">'+escH(sub.update)+'</div>'+(sub.notes?'<h4 style="margin-top:14px">Notes</h4><div class="update-text">'+escH(sub.notes)+'</div>':'')+'</div></td>';tbody.appendChild(et);}
+  });
+}
+
+function filterTable(f,btn){
+  document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');
+  const wk=wkKey(curWeek),subs=data.submissions[wk]||{};
+  renderDashTable(subs,data.members.filter(m=>m.active).filter(m=>f==='all'||(f==='submitted'&&subs[m.id])||(f==='pending'&&!subs[m.id])));
+}
+
+// =============================================
+//  EXPORT
+// =============================================
+function getExportRows(){
+  const scope=document.getElementById('exportScope').value,mf=document.getElementById('exportMembers').value;
+  let ml=mf==='everyone'?data.members.slice():data.members.filter(m=>m.active);
+  let wks=[];
+  if(scope==='current')wks=[wkKey(curWeek)];
+  else if(scope==='range'){const from=document.getElementById('exportFrom').value,to=document.getElementById('exportTo').value;if(!from||!to)return[];let d=new Date(from+'T00:00:00'),e=new Date(to+'T00:00:00');while(d<=e){if(d.getDay()===1)wks.push(wkKey(d));d.setDate(d.getDate()+1);}if(!wks.length)wks=[wkKey(new Date(from+'T00:00:00'))];}
+  else wks=Object.keys(data.submissions).sort();
+  const rows=[];
+  wks.forEach(wk=>{const subs=data.submissions[wk]||{},wd=new Date(wk+'T00:00:00'),wl=wd.toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'});
+    ml.forEach(m=>{const sub=subs[m.id];
+      if(sub){const dt=new Date(sub.submittedAt);rows.push({name:m.name,role:m.role,email:m.email,weekLabel:wl,submittedAt:dt.toLocaleString('en-US',{month:'short',day:'numeric',year:'numeric',hour:'2-digit',minute:'2-digit'}),update:sub.update,notes:sub.notes||'',status:'Submitted',dayOfWeek:dt.toLocaleDateString('en-US',{weekday:'long'}),onTime:dt.getDay()===1?'Yes':'No'});}
+      else rows.push({name:m.name,role:m.role,email:m.email,weekLabel:wl,submittedAt:'',update:'',notes:'',status:'No Submission',dayOfWeek:'',onTime:''});
+    });
+  });
+  return rows;
+}
+
+function updateHeroStats(){let s=0;Object.keys(data.submissions).forEach(w=>{s+=Object.keys(data.submissions[w]).length;});document.getElementById('heroSubs').textContent=s;document.getElementById('heroWeeks').textContent=Object.keys(data.submissions).length;}
+
+function refreshPreview(){
+  const rows=getExportRows(),sub=rows.filter(r=>r.status==='Submitted').length,miss=rows.length-sub,wks=new Set(rows.map(r=>r.weekLabel)).size;
+  document.getElementById('prevRows').textContent=rows.length;document.getElementById('prevSub').textContent=sub;document.getElementById('prevMiss').textContent=miss;document.getElementById('prevWks').textContent=wks;
+  const pb=document.getElementById('previewBody');pb.innerHTML='';
+  if(!rows.length){pb.innerHTML='<tr><td colspan="9" style="text-align:center;color:var(--ink-faint);padding:24px">No data.</td></tr>';return;}
+  rows.slice(0,15).forEach(r=>{const tr=document.createElement('tr'),badge=r.status==='Submitted'?'<span class="status-badge submitted"><span class="status-dot"></span>Submitted</span>':'<span class="status-badge pending"><span class="status-dot"></span>None</span>';
+    tr.innerHTML='<td style="white-space:nowrap;font-weight:500">'+esc(r.name)+'</td><td>'+esc(r.role)+'</td><td>'+esc(r.email)+'</td><td>'+esc(r.weekLabel)+'</td><td>'+r.submittedAt+'</td><td class="truncate-cell" title="'+esc(r.update)+'">'+(esc(r.update)||'\u2014')+'</td><td class="truncate-cell" title="'+esc(r.notes)+'">'+(esc(r.notes)||'\u2014')+'</td><td>'+badge+'</td><td>'+(r.onTime||'\u2014')+'</td>';pb.appendChild(tr);});
+}
+
+function downloadCSV(rows,fn){
+  if(!rows.length){showToast('No data.');return false;}
+  const h=['Team Member','Role','Email','Week Of','Submitted At','Priorities','Notes','Status','Day','On Time'];
+  const lines=[h.map(q=>'"'+q+'"').join(',')];
+  rows.forEach(r=>{lines.push([r.name,r.role,r.email,r.weekLabel,r.submittedAt,r.update,r.notes,r.status,r.dayOfWeek,r.onTime].map(v=>'"'+(v||'').replace(/"/g,'""').replace(/\n/g,' ')+'"').join(','));});
+  const blob=new Blob(['\uFEFF'+lines.join('\r\n')],{type:'text/csv;charset=utf-8;'});dl(blob,fn);return true;
+}
+
+function downloadXLS(rows,fn){
+  if(!rows.length){showToast('No data.');return false;}
+  let h='<html><head><meta charset="UTF-8"><style>th{background:#2d6a3f;color:#fff;padding:8px 10px;text-align:left;font-size:11px;font-family:Arial}td{padding:6px 10px;font-size:11px;border-bottom:1px solid #ddd;font-family:Arial}tr:nth-child(even){background:#f5f0e8}.ok{color:#2d6a3f;font-weight:bold}.miss{color:#c0392b;font-weight:bold}</style></head><body><table><tr><th>Team Member</th><th>Role</th><th>Email</th><th>Week Of</th><th>Submitted At</th><th>Priorities</th><th>Notes</th><th>Status</th><th>Day</th><th>On Time</th></tr>';
+  rows.forEach(r=>{h+='<tr><td>'+esc(r.name)+'</td><td>'+esc(r.role)+'</td><td>'+esc(r.email)+'</td><td>'+esc(r.weekLabel)+'</td><td>'+esc(r.submittedAt)+'</td><td>'+esc(r.update)+'</td><td>'+esc(r.notes)+'</td><td class="'+(r.status==='Submitted'?'ok':'miss')+'">'+esc(r.status)+'</td><td>'+esc(r.dayOfWeek)+'</td><td>'+esc(r.onTime)+'</td></tr>';});
+  h+='</table></body></html>';dl(new Blob(['\uFEFF'+h],{type:'application/vnd.ms-excel'}),fn);return true;
+}
+
+function quickExportCSV(){const p=[document.getElementById('exportScope').value,document.getElementById('exportMembers').value];document.getElementById('exportScope').value='all';document.getElementById('exportMembers').value='all';const rows=getExportRows();if(downloadCSV(rows,'StellarSeeds_'+today()+'.csv'))showToast('CSV: '+rows.length+' rows');document.getElementById('exportScope').value=p[0];document.getElementById('exportMembers').value=p[1];}
+function quickExportXLS(){const p=[document.getElementById('exportScope').value,document.getElementById('exportMembers').value];document.getElementById('exportScope').value='all';document.getElementById('exportMembers').value='all';const rows=getExportRows();if(downloadXLS(rows,'StellarSeeds_'+today()+'.xls'))showToast('XLS: '+rows.length+' rows');document.getElementById('exportScope').value=p[0];document.getElementById('exportMembers').value=p[1];}
+function runCustomExport(){const rows=getExportRows(),fmt=document.getElementById('exportFormat').value,scope=document.getElementById('exportScope').value;let sfx=scope==='current'?wkKey(curWeek):scope==='range'?(document.getElementById('exportFrom').value||'from')+'_'+(document.getElementById('exportTo').value||'to'):'all';const fn='StellarSeeds_'+sfx;if(fmt==='csv'){if(downloadCSV(rows,fn+'.csv'))showToast('CSV: '+rows.length+' rows');}else{if(downloadXLS(rows,fn+'.xls'))showToast('XLS: '+rows.length+' rows');}}
+function dl(b,f){const u=URL.createObjectURL(b),a=document.createElement('a');a.href=u;a.download=f;document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(u);}
+function today(){return new Date().toISOString().slice(0,10);}
+
+// =============================================
+//  PERFORMANCE
+// =============================================
+function renderPerformance(){
+  const wks=[];for(let i=5;i>=0;i--){const d=new Date(monBase);d.setDate(d.getDate()-i*7);wks.push({key:wkKey(d),label:d.toLocaleDateString('en-US',{month:'short',day:'numeric'})});}
+  const ch=document.getElementById('complianceChart');ch.innerHTML='';const ac=data.members.filter(m=>m.active).length;
+  wks.forEach((w,idx)=>{const subs=data.submissions[w.key]||{},s=Object.keys(subs).length,rate=ac>0?Math.round((s/ac)*100):0,h=(rate/100)*140,last=idx===wks.length-1;const g=document.createElement('div');g.className='bar-group';g.innerHTML='<div class="bar" style="height:'+Math.max(h,4)+'px;background:'+(last?'var(--accent)':'var(--border)')+';"><span class="bar-val" style="color:'+(last?'var(--accent)':'var(--ink-light)')+'">'+rate+'%</span></div><span class="bar-label">'+w.label+'</span>';ch.appendChild(g);});
+  const cw=wkKey(curWeek),cs=data.submissions[cw]||{},sc=Object.keys(cs).length,pc=ac-sc,dr=ac>0?Math.round((sc/ac)*100):0;
+  const svg=document.getElementById('donutSvg');svg.innerHTML='<circle cx="21" cy="21" r="15.915" fill="none" stroke="var(--surface-alt)" stroke-width="3"/>';
+  if(sc>0){svg.innerHTML+='<circle cx="21" cy="21" r="15.915" fill="none" stroke="var(--accent)" stroke-width="3" stroke-dasharray="'+(sc/ac*100)+' '+(100-sc/ac*100)+'" stroke-dashoffset="25" stroke-linecap="round"/>';}
+  if(pc>0){svg.innerHTML+='<circle cx="21" cy="21" r="15.915" fill="none" stroke="var(--gold)" stroke-width="3" stroke-dasharray="'+(pc/ac*100)+' '+(100-pc/ac*100)+'" stroke-dashoffset="'+(25+sc/ac*100)+'" stroke-linecap="round"/>';}
+  document.getElementById('donutVal').textContent=dr+'%';
+  document.getElementById('donutLegend').innerHTML='<div class="donut-legend-item"><div class="donut-legend-dot" style="background:var(--accent)"></div>Submitted ('+sc+')</div><div class="donut-legend-item"><div class="donut-legend-dot" style="background:var(--gold)"></div>Pending ('+pc+')</div>';
+  const pb=document.getElementById('perfTableBody');pb.innerHTML='';
+  data.members.filter(m=>m.active).forEach(m=>{let wa=0,on=0,lt=0,ms=0,st=0,cr=0,times=[];
+    Object.keys(data.submissions).sort().forEach(wk=>{wa++;const sub=data.submissions[wk][m.id];if(sub){const dt=new Date(sub.submittedAt);if(dt.getDay()===1)on++;else lt++;times.push(dt);cr++;st=Math.max(st,cr);}else{ms++;cr=0;}});
+    const comp=wa>0?Math.round(((on+lt)/wa)*100):0,avg=times.length?new Date(times.reduce((a,b)=>a+b.getTime(),0)/times.length).toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'}):'\u2014',cc=comp>=80?'var(--accent)':comp>=50?'var(--gold)':'var(--red)',ini=m.name.split(' ').map(w=>w[0]).join('').toUpperCase(),sc2=st>=4?'var(--gold)':st>=2?'var(--accent)':'var(--ink-faint)',si=st>=4?'&#128293; ':st>=2?'&#9650; ':'';
+    const tr=document.createElement('tr');tr.innerHTML='<td><div class="member-cell"><div class="avatar" style="background:'+m.color+'">'+ini+'</div><div><div class="member-name">'+m.name+'</div><div class="member-role">'+m.role+'</div></div></div></td><td style="text-align:center">'+wa+'</td><td style="text-align:center;color:var(--accent)">'+on+'</td><td style="text-align:center;color:var(--gold)">'+lt+'</td><td style="text-align:center;color:var(--red)">'+ms+'</td><td class="time-badge">'+avg+'</td><td><div class="compliance-bar-wrap"><div class="compliance-bar"><div class="compliance-bar-fill" style="width:'+comp+'%;background:'+cc+'"></div></div><span class="compliance-pct" style="color:'+cc+'">'+comp+'%</span></div></td><td style="color:'+sc2+';font-weight:600">'+si+st+'wk</td>';pb.appendChild(tr);});
+  const sg=document.getElementById('streakGrid');sg.innerHTML='';let best={name:'\u2014',s:0};
+  data.members.filter(m=>m.active).forEach(m=>{let mx=0,cr2=0;Object.keys(data.submissions).sort().forEach(wk=>{if(data.submissions[wk][m.id]){cr2++;mx=Math.max(mx,cr2);}else cr2=0;});if(mx>best.s)best={name:m.name,s:mx};});
+  if(best.s>0)sg.innerHTML+='<div class="streak-card"><div class="streak-icon fire">&#128293;</div><div class="streak-info"><h4 style="color:var(--gold)">'+best.s+' Weeks</h4><span>Longest \u2014 '+best.name+'</span></div></div>';
+  sg.innerHTML+='<div class="streak-card"><div class="streak-icon trophy">&#127942;</div><div class="streak-info"><h4 style="color:var(--accent)">'+ac+' Members</h4><span>Active this cycle</span></div></div>';
+}
+
+// =============================================
+//  TEAM MANAGEMENT
+// =============================================
+function renderTeamManagement(){
+  document.getElementById('managerEmail').value=data.managerEmail||'';
+  const list=document.getElementById('teamList');list.innerHTML='';
+  data.members.forEach(m=>{const ini=m.name.split(' ').map(w=>w[0]).join('').toUpperCase();const row=document.createElement('div');row.className='team-row';
+    row.innerHTML='<div class="avatar" style="background:'+m.color+'">'+ini+'</div><div><div class="team-name-val">'+m.name+'</div><div class="team-role-val">'+(m.role||'\u2014')+' &middot; <span style="color:'+(m.active?'var(--accent)':'var(--red)')+'">'+(m.active?'Active':'Inactive')+'</span></div></div><div class="team-email-val">'+m.email+'</div><div class="team-actions"><button class="icon-btn" onclick="openEditMemberModal('+m.id+')" title="Edit">&#9998;</button><button class="icon-btn danger" onclick="deleteMember('+m.id+')" title="Remove">&#10005;</button></div>';
+    list.appendChild(row);});
+}
+
+// =============================================
+//  UTILS
+// =============================================
+function fmtTime(iso){const d=new Date(iso);return d.toLocaleDateString('en-US',{weekday:'short'})+' '+d.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'});}
+function esc(t){return t?String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'):'';}
+function escH(t){const d=document.createElement('div');d.textContent=t;return d.innerHTML;}
+function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.className='show';clearTimeout(t._timer);t._timer=setTimeout(()=>t.className='',3000);}
+
+// =============================================
+//  INIT
+// =============================================
+document.getElementById('currentDate').innerHTML='<strong>'+now.toLocaleDateString('en-US',{weekday:'long'})+'</strong><br>'+now.toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'});
+document.querySelectorAll('.modal-overlay').forEach(o=>{o.addEventListener('click',e=>{if(e.target===o)o.classList.remove('show');});});
+initApp();
+</script>
+</body>
+</html>

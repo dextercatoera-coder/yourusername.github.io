@@ -1,0 +1,2 @@
+Base URL: /sites/{site-name}/_api/web/lists
+or just: /_api/web/lists (if on the same site)

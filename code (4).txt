@@ -1,0 +1,33 @@
+Trigger: "When an HTTP request is received"
+  Method: POST
+  Request Body JSON Schema:
+  {
+    "type": "object",
+    "properties": {
+      "action": { "type": "string" },
+      "data": { "type": "object" }
+    }
+  }
+
+  → "Switch" on action:
+
+    Case "saveSubmission":
+      → "Create item" in SS_PrioritySubmissions
+         Title = data.WeekKey
+         MemberID = data.MemberID
+         MemberName = data.MemberName
+         Priorities = data.Priorities
+         Notes = data.Notes
+         SubmittedAt = data.SubmittedAt
+         OnTime = data.OnTime
+
+    Case "addMember":
+      → "Create item" in SS_TeamRoster
+    Case "updateMember":
+      → "Update item" in SS_TeamRoster (ID = data.ID)
+    Case "deleteMember":
+      → "Delete item" in SS_TeamRoster (ID = data.ID)
+    Case "saveSettings":
+      → "Create item" in SS_TeamRoster (or a Settings list)
+
+  → "Response" Status: 200 Body: {"ok":true}
