@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Stellar Seeds — Weekly Priority Tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Mono:wght@300;400;500&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#faf8f4;--bg-warm:#f5f0e8;--surface:#fff;--surface-hover:#fdfcfa;--surface-alt:#f0ece4;--accent:#2d6a3f;--accent-light:#3d8b54;--accent-dim:rgba(45,106,63,.08);--accent-dim2:rgba(45,106,63,.14);--gold:#c8982c;--gold-light:#e2b94a;--gold-dim:rgba(200,152,44,.10);--gold-dim2:rgba(200,152,44,.18);--red:#c0392b;--red-dim:rgba(192,57,43,.08);--blue:#2a6fa8;--blue-dim:rgba(42,111,168,.08);--ink:#1a1714;--ink-mid:#5a554e;--ink-light:#8a847c;--ink-faint:#b5b0a8;--border:#e0dbd2;--border-light:#ebe6dd;--shadow:rgba(26,23,20,.06);--shadow-md:rgba(26,23,20,.10)}
+*{margin:0;padding:0;box-sizing:border-box}html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--ink);font-family:'DM Mono',monospace;font-size:13px;line-height:1.6;min-height:100vh}
+body::before{content:'';position:fixed;inset:0;background-image:radial-gradient(circle at 20% 30%,rgba(45,106,63,.015) 0px,transparent 1px),radial-gradient(circle at 80% 70%,rgba(200,152,44,.015) 0px,transparent 1px);background-size:24px 24px,28px 28px;pointer-events:none;z-index:0}
+.wrapper{position:relative;z-index:1}
+.motif-bar{height:4px;background:linear-gradient(90deg,var(--accent) 0%,var(--gold) 50%,var(--accent) 100%);opacity:.6}
+.conn-bar{padding:8px 32px;font-size:10px;text-align:center;letter-spacing:1px;text-transform:uppercase;font-family:'Syne',sans-serif;font-weight:600;display:flex;align-items:center;justify-content:center;gap:8px}
+.conn-bar.connected{background:var(--accent-dim);color:var(--accent)}
+.conn-bar.local{background:var(--gold-dim);color:var(--gold)}
+.conn-bar.error{background:var(--red-dim);color:var(--red)}
+.conn-bar.sync{background:var(--blue-dim);color:var(--blue)}
+.conn-dot{width:8px;height:8px;border-radius:50%;display:inline-block;flex-shrink:0}
+.conn-bar.connected .conn-dot{background:var(--accent);box-shadow:0 0 6px var(--accent)}
+.conn-bar.local .conn-dot{background:var(--gold)}
+.conn-bar.error .conn-dot{background:var(--red)}
+.conn-bar.sync .conn-dot{background:var(--blue);animation:blink 1s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+.topbar{position:sticky;top:0;z-index:100;background:rgba(250,248,244,.92);backdrop-filter:blur(16px);border-bottom:1px solid var(--border);padding:0 32px;display:flex;align-items:center;justify-content:space-between;height:60px}
+.topbar-brand{display:flex;align-items:center;gap:12px}
+.brand-icon{width:36px;height:36px;background:var(--accent);border-radius:50%;display:flex;align-items:center;justify-content:center;position:relative}
+.brand-icon::before{content:'✦';color:var(--gold-light);font-size:14px}
+.brand-icon::after{content:'';position:absolute;width:28px;height:28px;border:1.5px solid rgba(255,255,255,.25);border-radius:50%}
+.brand-text{font-family:'Syne',sans-serif;font-weight:800;font-size:16px;text-transform:uppercase;letter-spacing:3px;color:var(--accent)}
+.brand-sub{font-size:9px;text-transform:uppercase;letter-spacing:2px;color:var(--gold);font-weight:500}
+.topbar-nav{display:flex}.topbar-nav a{color:var(--ink-light);text-decoration:none;font-size:11px;text-transform:uppercase;letter-spacing:1.5px;padding:20px 14px;border-bottom:2px solid transparent;transition:all .2s;font-weight:500;font-family:'Syne',sans-serif}.topbar-nav a:hover{color:var(--ink)}.topbar-nav a.active{color:var(--accent);border-bottom-color:var(--accent)}
+.topbar-date{font-size:11px;color:var(--ink-faint);text-align:right}.topbar-date strong{color:var(--ink-mid);font-weight:500}
+.section-container{max-width:1280px;margin:0 auto;padding:36px 32px}.page-section{display:none}.page-section.active{display:block}
+.section-header{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:28px;flex-wrap:wrap;gap:16px}
+.section-tag{font-family:'Syne',sans-serif;font-weight:700;font-size:10px;text-transform:uppercase;letter-spacing:2.5px;color:var(--accent);margin-bottom:6px}
+.section-header h2{font-family:'Instrument Serif',serif;font-size:30px;font-weight:400;line-height:1.15}
+.motif-dots{display:flex;gap:6px;align-items:center;margin-bottom:8px}
+.motif-dots span{width:4px;height:4px;border-radius:50%;background:var(--gold)}.motif-dots span:nth-child(2){background:var(--accent);width:6px;height:6px}
+.week-selector{display:flex;align-items:center;gap:10px}
+.week-selector button{background:var(--surface);border:1px solid var(--border);color:var(--ink-mid);width:32px;height:32px;border-radius:6px;cursor:pointer;font-size:14px;transition:all .15s;display:flex;align-items:center;justify-content:center}.week-selector button:hover{border-color:var(--accent);color:var(--accent)}
+.week-label{font-family:'Syne',sans-serif;font-weight:600;font-size:13px;min-width:200px;text-align:center}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 18px;border-radius:6px;font-family:'Syne',sans-serif;font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:1px;cursor:pointer;transition:all .2s;border:1px solid transparent;text-decoration:none}
+.btn-primary{background:var(--accent);color:#fff;border-color:var(--accent)}.btn-primary:hover{background:var(--accent-light)}
+.btn-secondary{background:var(--surface);color:var(--ink-mid);border-color:var(--border)}.btn-secondary:hover{border-color:var(--accent);color:var(--accent)}
+.btn-gold{background:var(--gold);color:#fff;border-color:var(--gold)}.btn-gold:hover{background:var(--gold-light)}
+.icon-btn{background:none;border:1px solid var(--border-light);width:30px;height:30px;border-radius:6px;cursor:pointer;font-size:12px;color:var(--ink-light);display:flex;align-items:center;justify-content:center;transition:all .15s}.icon-btn:hover{border-color:var(--accent);color:var(--accent)}.icon-btn.danger:hover{border-color:var(--red);color:var(--red)}
+.kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:32px}
+.kpi-card{background:var(--surface);border:1px solid var(--border-light);border-radius:8px;padding:22px 20px;position:relative;overflow:hidden;transition:all .2s;box-shadow:0 1px 3px var(--shadow)}.kpi-card:hover{box-shadow:0 4px 12px var(--shadow-md)}.kpi-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}.kpi-card.k-accent::before{background:var(--accent)}.kpi-card.k-gold::before{background:var(--gold)}.kpi-card.k-red::before{background:var(--red)}.kpi-card.k-blue::before{background:var(--blue)}
+.kpi-icon{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px;margin-bottom:12px}
+.kpi-card.k-accent .kpi-icon{background:var(--accent-dim);color:var(--accent)}.kpi-card.k-gold .kpi-icon{background:var(--gold-dim);color:var(--gold)}.kpi-card.k-red .kpi-icon{background:var(--red-dim);color:var(--red)}.kpi-card.k-blue .kpi-icon{background:var(--blue-dim);color:var(--blue)}
+.kpi-label{font-size:10px;text-transform:uppercase;letter-spacing:1.5px;color:var(--ink-light);margin-bottom:8px;font-weight:500}
+.kpi-value{font-family:'Syne',sans-serif;font-weight:800;font-size:32px;line-height:1;margin-bottom:4px}
+.kpi-card.k-accent .kpi-value{color:var(--accent)}.kpi-card.k-gold .kpi-value{color:var(--gold)}.kpi-card.k-red .kpi-value{color:var(--red)}.kpi-card.k-blue .kpi-value{color:var(--blue)}
+.kpi-note{font-size:11px;color:var(--ink-faint)}
+.filter-bar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:16px}
+.filter-btn{background:var(--surface);border:1px solid var(--border-light);color:var(--ink-light);padding:6px 14px;border-radius:20px;font-size:10px;font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:1px;cursor:pointer;transition:all .15s}.filter-btn:hover,.filter-btn.active{border-color:var(--accent);color:var(--accent);background:var(--accent-dim)}
+.table-wrap{border:1px solid var(--border-light);border-radius:8px;overflow:hidden;box-shadow:0 1px 3px var(--shadow);margin-bottom:24px}
+table{width:100%;border-collapse:collapse;font-size:12px}thead{background:var(--bg-warm)}
+th{font-family:'Syne',sans-serif;font-weight:600;font-size:10px;text-transform:uppercase;letter-spacing:1.5px;color:var(--ink-light);padding:14px 16px;text-align:left;white-space:nowrap;border-bottom:1px solid var(--border)}
+td{padding:14px 16px;border-bottom:1px solid var(--border-light);vertical-align:middle}tbody tr{transition:background .15s}tbody tr:hover{background:var(--surface-hover)}tbody tr:last-child td{border-bottom:none}
+.member-cell{display:flex;align-items:center;gap:10px}
+.avatar{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-weight:700;font-size:11px;color:#fff;flex-shrink:0}
+.member-name{font-weight:500}.member-role{font-size:10px;color:var(--ink-light)}
+.status-badge{display:inline-flex;align-items:center;gap:5px;padding:4px 12px;border-radius:20px;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.8px}.status-badge.submitted{background:var(--accent-dim);color:var(--accent)}.status-badge.pending{background:var(--gold-dim2);color:var(--gold)}
+.status-dot{width:6px;height:6px;border-radius:50%}.status-badge.submitted .status-dot{background:var(--accent)}.status-badge.pending .status-dot{background:var(--gold)}
+.compliance-bar-wrap{display:flex;align-items:center;gap:8px}.compliance-bar{flex:1;height:6px;background:var(--surface-alt);border-radius:3px;overflow:hidden;max-width:80px}.compliance-bar-fill{height:100%;border-radius:3px;transition:width .6s ease}.compliance-pct{font-family:'Syne',sans-serif;font-weight:700;font-size:12px;min-width:36px}
+.time-badge{font-size:11px;color:var(--ink-light)}.time-badge.early{color:var(--accent)}
+.expand-row{display:none}.expand-row.open{display:table-row}.expand-cell{background:var(--bg-warm);padding:0!important}.expand-inner{padding:20px 24px}.expand-inner h4{font-family:'Syne',sans-serif;font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:1.5px;color:var(--accent);margin-bottom:10px}
+.update-text{font-size:12px;color:var(--ink-mid);line-height:1.7;white-space:pre-line;background:var(--surface);border:1px solid var(--border-light);border-radius:6px;padding:16px 18px}
+.expand-btn{background:none;border:1px solid var(--border-light);color:var(--ink-light);width:26px;height:26px;border-radius:6px;cursor:pointer;font-size:10px;transition:all .15s;display:flex;align-items:center;justify-content:center}.expand-btn:hover{border-color:var(--accent);color:var(--accent)}.expand-btn.open{background:var(--accent-dim);border-color:var(--accent);color:var(--accent);transform:rotate(180deg)}
+.info-box{background:var(--accent-dim);border-left:3px solid var(--accent);padding:14px 18px;margin:16px 0;font-size:12px;color:var(--ink-mid);border-radius:0 8px 8px 0;line-height:1.7}.info-box strong{color:var(--accent)}
+.gold-box{background:var(--gold-dim);border-left:3px solid var(--gold);padding:14px 18px;margin:16px 0;font-size:12px;color:var(--ink-mid);border-radius:0 8px 8px 0;line-height:1.7}.gold-box strong{color:var(--gold)}
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(26,23,20,.4);backdrop-filter:blur(4px);z-index:200;align-items:center;justify-content:center}.modal-overlay.show{display:flex}
+.modal{background:var(--surface);border-radius:12px;width:90%;max-width:560px;max-height:85vh;overflow-y:auto;box-shadow:0 20px 60px rgba(26,23,20,.2);border:1px solid var(--border)}
+.modal-header{padding:24px 28px 0;display:flex;justify-content:space-between;align-items:center}.modal-header h3{font-family:'Syne',sans-serif;font-weight:700;font-size:16px}
+.modal-close{background:none;border:1px solid var(--border-light);width:30px;height:30px;border-radius:6px;cursor:pointer;font-size:14px;color:var(--ink-light);display:flex;align-items:center;justify-content:center}.modal-close:hover{border-color:var(--red);color:var(--red)}
+.modal-body{padding:20px 28px 28px}.modal-footer{padding:0 28px 24px;display:flex;gap:8px;justify-content:flex-end}
+.field-group{margin-bottom:16px}.field-group label{display:block;font-size:10px;text-transform:uppercase;letter-spacing:1.5px;color:var(--ink-light);margin-bottom:6px;font-weight:500;font-family:'Syne',sans-serif}
+.field-group input,.field-group textarea,.field-group select{width:100%;padding:10px 14px;border:1px solid var(--border);border-radius:6px;font-family:'DM Mono',monospace;font-size:12px;color:var(--ink);background:var(--bg);transition:border-color .15s;outline:none}
+.field-group input:focus,.field-group textarea:focus,.field-group select:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-dim)}
+.field-group textarea{resize:vertical;min-height:120px;line-height:1.7}.field-group input::placeholder,.field-group textarea::placeholder{color:var(--ink-faint)}
+.field-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.team-list{display:flex;flex-direction:column;gap:8px;margin-top:16px}
+.team-row{display:grid;grid-template-columns:42px 1fr 1.5fr auto auto;gap:12px;align-items:center;background:var(--surface);border:1px solid var(--border-light);border-radius:8px;padding:14px 18px;transition:all .2s;box-shadow:0 1px 2px var(--shadow)}.team-row:hover{box-shadow:0 2px 8px var(--shadow-md)}.team-row .avatar{width:38px;height:38px;font-size:12px}
+.team-name-val{font-weight:500;font-size:13px}.team-role-val{font-size:10px;color:var(--ink-light)}.team-email-val{font-size:11px;color:var(--ink-mid)}.team-actions{display:flex;gap:6px}
+.setup-card{background:var(--surface);border:2px dashed var(--border);border-radius:12px;padding:40px;max-width:700px;margin:24px auto;text-align:center}
+.setup-card h3{font-family:'Syne',sans-serif;font-weight:700;font-size:20px;margin-bottom:8px}.setup-card>p{color:var(--ink-mid);font-size:12px;line-height:1.7;margin-bottom:24px}
+.setup-steps{text-align:left;margin:0 auto;max-width:560px}
+.setup-step{display:flex;gap:14px;align-items:flex-start;margin-bottom:18px}
+.step-circle{width:32px;height:32px;border-radius:50%;background:var(--accent-dim);border:1.5px solid var(--accent);display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-weight:800;font-size:13px;color:var(--accent);flex-shrink:0}
+.step-text{font-size:12px;color:var(--ink-mid);line-height:1.6}.step-text strong{color:var(--ink)}
+.code-inline{background:var(--bg-warm);border:1px solid var(--border);padding:2px 8px;border-radius:4px;font-size:11px;font-family:'DM Mono',monospace;word-break:break-all}
+@keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+.animate-in{opacity:0;animation:fadeUp .4s ease forwards}.animate-in:nth-child(1){animation-delay:.05s}.animate-in:nth-child(2){animation-delay:.1s}.animate-in:nth-child(3){animation-delay:.15s}.animate-in:nth-child(4){animation-delay:.2s}
+#toast{display:none;position:fixed;bottom:24px;right:24px;z-index:300;background:var(--accent);color:#fff;padding:14px 22px;border-radius:8px;font-size:12px;font-family:'Syne',sans-serif;font-weight:600;box-shadow:0 8px 24px rgba(0,0,0,.15)}#toast.show{display:block;animation:fadeUp .3s ease}
+@media(max-width:1024px){.kpi-row{grid-template-columns:repeat(2,1fr)}.team-row{grid-template-columns:42px 1fr auto}.team-email-val{display:none}}
+@media(max-width:768px){.topbar{padding:0 16px}.topbar-nav a{padding:16px 10px;font-size:10px;letter-spacing:.5px}.section-container{padding:24px 16px}.field-row{grid-template-columns:1fr}.team-row{grid-template-columns:36px 1fr auto;gap:8px}}
+@media(max-width:480px){.kpi-row{grid-template-columns:1fr}.topbar-nav{overflow-x:auto}}
+</style>
+</head>
+<body>
+<div class="wrapper">
+<div class="motif-bar"></div>
+<div class="conn-bar sync" id="connBar"><span class="conn-dot"></span><span id="connText">Loading...</span></div>
+
+<nav class="topbar">
+  <div class="topbar-brand"><div class="brand-icon"></div><div><div class="brand-text">Stellar Seeds</div><div class="brand-sub">Priority Tracker</div></div></div>
+  <div class="topbar-nav">
+    <a href="#" class="active" onclick="go('dashboard',this);return false">Dashboard</a>
+    <a href="#" onclick="go('team',this);return false">Team</a>
+    <a href="#" onclick="go('setup',this);return false">Setup</a>
+  </div>
+  <div class="topbar-date" id="curDate"></div>
+</nav>
+
+<!-- DASHBOARD -->
+<div id="dashboard" class="page-section active">
+<div class="section-container">
+  <div class="section-header">
+    <div><div class="motif-dots"><span></span><span></span><span></span></div><div class="section-tag">Weekly Overview</div><h2>Priority Dashboard</h2></div>
+    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+      <div class="week-selector"><button onclick="chgWk(-1)">&larr;</button><div class="week-label" id="wkLbl"></div><button onclick="chgWk(1)">&rarr;</button></div>
+      <button class="btn btn-primary" onclick="openSubmit()">&#9998; Submit Update</button>
+      <button class="btn btn-secondary" onclick="refresh()">&#8634; Refresh</button>
+    </div>
+  </div>
+  <div class="kpi-row">
+    <div class="kpi-card k-accent animate-in"><div class="kpi-icon">&#127793;</div><div class="kpi-label">Team</div><div class="kpi-value" id="kTotal">0</div><div class="kpi-note">Active members</div></div>
+    <div class="kpi-card k-gold animate-in"><div class="kpi-icon">&#10003;</div><div class="kpi-label">Submitted</div><div class="kpi-value" id="kSub">0</div><div class="kpi-note" id="kSubN">This week</div></div>
+    <div class="kpi-card k-red animate-in"><div class="kpi-icon">&#9888;</div><div class="kpi-label">Pending</div><div class="kpi-value" id="kPend">0</div><div class="kpi-note">Awaiting update</div></div>
+    <div class="kpi-card k-blue animate-in"><div class="kpi-icon">&#128200;</div><div class="kpi-label">Compliance</div><div class="kpi-value" id="kComp">0%</div><div class="kpi-note" id="kCompN">This week</div></div>
+  </div>
+  <div class="filter-bar"><button class="filter-btn active" onclick="fltTbl('all',this)">All</button><button class="filter-btn" onclick="fltTbl('submitted',this)">Submitted</button><button class="filter-btn" onclick="fltTbl('pending',this)">Pending</button></div>
+  <div class="table-wrap"><table><thead><tr><th style="width:36px"></th><th>Team Member</th><th>Status</th><th>Submitted</th><th>Compliance</th><th></th></tr></thead><tbody id="dashBody"></tbody></table></div>
+  <div class="info-box"><strong>Real-time sharing:</strong> All updates are saved to a shared Google Sheet. When someone submits, click <strong>&#8634; Refresh</strong> to see their update. Data is shared across all team members.</div>
+</div>
+</div>
+
+<!-- TEAM -->
+<div id="team" class="page-section">
+<div class="section-container">
+  <div class="section-header"><div><div class="motif-dots"><span></span><span></span><span></span></div><div class="section-tag">Team & Settings</div><h2>Manage Team</h2></div><button class="btn btn-primary" onclick="openAddMbr()">+ Add Member</button></div>
+  <div id="apiStatus"></div>
+  <p style="color:var(--ink-mid);margin-bottom:8px;max-width:640px">Add, edit, or remove team members. Changes are saved to the shared Google Sheet.</p>
+  <div class="gold-box"><strong>Google Sheet URL:</strong> Paste your Apps Script web app URL below. All team members must use the same URL.</div>
+  <div class="field-group" style="max-width:600px;margin-bottom:20px"><label>Google Apps Script URL</label><input type="text" id="apiUrl" placeholder="https://script.google.com/macros/s/AKfycbx.../exec" onchange="saveUrl()"></div>
+  <div class="field-row" style="max-width:500px;margin-bottom:20px"><div class="field-group"><label>Manager Email</label><input type="email" id="mgrEmail" placeholder="manager@stellarSeeds.com" onchange="D.managerEmail=this.value;saveLocal()"></div></div>
+  <div class="team-list" id="tList"></div>
+</div>
+</div>
+
+<!-- SETUP -->
+<div id="setup" class="page-section">
+<div class="section-container">
+  <div class="section-header"><div><div class="motif-dots"><span></span><span></span><span></span></div><div class="section-tag">Getting Started</div><h2>Setup Guide</h2></div></div>
+  <div class="setup-card">
+    <h3>Connect to Google Sheets (5 minutes)</h3>
+    <p>This lets all team members see the same data in real-time.</p>
+    <div class="setup-steps">
+      <div class="setup-step"><div class="step-circle">1</div><div class="step-text"><strong>Create a Google Sheet</strong> at <span class="code-inline">sheets.google.com</span>. Name it "Stellar Seeds Priority Tracker".</div></div>
+      <div class="setup-step"><div class="step-circle">2</div><div class="step-text"><strong>Create 2 tabs:</strong><br>Tab 1: <span class="code-inline">Submissions</span> — Headers: WeekKey | MemberID | Name | Priorities | Notes | SubmittedAt | OnTime<br>Tab 2: <span class="code-inline">Members</span> — Headers: ID | Name | Role | Email | Color | Active</div></div>
+      <div class="setup-step"><div class="step-circle">3</div><div class="step-text"><strong>Add team members</strong> in the Members tab (rows 2+). Set Active to <span class="code-inline">true</span>.</div></div>
+      <div class="setup-step"><div class="step-circle">4</div><div class="step-text"><strong>Click Extensions → Apps Script</strong>. Delete all code. Paste the script from the box below. Save it.</div></div>
+      <div class="setup-step"><div class="step-circle">5</div><div class="step-text"><strong>Deploy → New Deployment</strong> → Gear icon → Web app → Execute as: Me → Who has access: <span class="code-inline">Anyone</span> → Deploy → Copy the URL.</div></div>
+      <div class="setup-step"><div class="step-circle">6</div><div class="step-text"><strong>Paste the URL</strong> in the Team tab → Google Apps Script URL field. The connection bar turns green.</div></div>
+      <div class="setup-step"><div class="step-circle">7</div><div class="step-text"><strong>Share this page URL</strong> with your team. Everyone enters the same Apps Script URL in the Team tab.</div></div>
+    </div>
+  </div>
+  <div class="info-box"><strong>Apps Script code:</strong> Copy the full code from <a href="https://gist.github.com" style="color:var(--accent)">this setup</a>, or ask your manager for the code. It handles reading/writing to the Google Sheet automatically.</div>
+  <div class="gold-box"><strong>Without Google Sheets:</strong> The tracker still works in local mode. Each person's data stays in their browser. Use this for testing before connecting.</div>
+</div>
+</div>
+</div>
+
+<!-- MODALS -->
+<div class="modal-overlay" id="mmModal">
+<div class="modal">
+  <div class="modal-header"><h3 id="mmTitle">Add Member</h3><button class="modal-close" onclick="closeM('mmModal')">&times;</button></div>
+  <div class="modal-body">
+    <div class="field-row"><div class="field-group"><label>Full Name</label><input type="text" id="fName"></div><div class="field-group"><label>Role</label><input type="text" id="fRole"></div></div>
+    <div class="field-group"><label>Email</label><input type="email" id="fEmail"></div>
+    <div class="field-group"><label>Status</label><select id="fStatus"><option value="active">Active</option><option value="inactive">Inactive</option></select></div>
+  </div>
+  <div class="modal-footer"><button class="btn btn-secondary" onclick="closeM('mmModal')">Cancel</button><button class="btn btn-primary" onclick="saveMbr()">Save</button></div>
+</div>
+</div>
+
+<div class="modal-overlay" id="smModal">
+<div class="modal">
+  <div class="modal-header"><h3>Submit Weekly Update</h3><button class="modal-close" onclick="closeM('smModal')">&times;</button></div>
+  <div class="modal-body">
+    <div class="field-group"><label>Your Name</label><select id="fSubName"></select></div>
+    <div class="field-group"><label>Week Of</label><input type="text" id="fSubWeek" readonly></div>
+    <div class="field-group"><label>Priorities &amp; Updates</label><textarea id="fSubUpdate" placeholder="List your priorities, one per line...&#10;&#10;Example:&#10;1. Complete seed inventory audit&#10;2. Finalize supplier contracts&#10;3. Prepare progress report"></textarea></div>
+    <div class="field-group"><label>Notes / Blockers</label><textarea id="fSubNotes" style="min-height:60px" placeholder="Optional"></textarea></div>
+  </div>
+  <div class="modal-footer"><button class="btn btn-secondary" onclick="closeM('smModal')">Cancel</button><button class="btn btn-gold" onclick="doSubmit()">&#10003; Submit</button></div>
+</div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+// =============================================
+//  DATA
+// =============================================
+const LS='ss_google_v1';
+const DEF={managerEmail:'manager@stellarSeeds.com',apiUrl:'',nextId:9,
+  members:[
+    {id:1,name:'Maria Santos',role:'Seed Production Lead',email:'maria@stellarSeeds.com',color:'#2d6a3f',active:true},
+    {id:2,name:'James Lee',role:'Field Operations',email:'james@stellarSeeds.com',color:'#2a6fa8',active:true},
+    {id:3,name:'Aiko Tanaka',role:'Quality Assurance',email:'aiko@stellarSeeds.com',color:'#c8982c',active:true},
+    {id:4,name:'Carlos Rivera',role:'Logistics Coordinator',email:'carlos@stellarSeeds.com',color:'#7b4dbf',active:true},
+    {id:5,name:'Priya Patel',role:'Research Analyst',email:'priya@stellarSeeds.com',color:'#c0392b',active:true},
+    {id:6,name:'Sarah Chen',role:'Sales Manager',email:'sarah@stellarSeeds.com',color:'#d4861a',active:true},
+    {id:7,name:'Tom Nguyen',role:'Nursery Supervisor',email:'tom@stellarSeeds.com',color:'#1a8a7a',active:true},
+    {id:8,name:'David Kim',role:'Finance Officer',email:'david@stellarSeeds.com',color:'#8a5a2a',active:true}
+  ],
+  submissions:{}
+};
+let D,connected=false;
+
+function loadLocal(){try{const d=JSON.parse(localStorage.getItem(LS));if(d&&d.members)return d}catch(e){}return JSON.parse(JSON.stringify(DEF))}
+function saveLocal(){localStorage.setItem(LS,JSON.stringify(D))}
+
+// =============================================
+//  GOOGLE SHEETS API
+// =============================================
+async function apiLoad(){
+  if(!D.apiUrl)return false;
+  try{
+    setConn('sync','Syncing with Google Sheets...');
+    const r=await fetch(D.apiUrl+'?action=all',{redirect:'follow'});
+    const d=await r.json();
+    if(d.members&&d.members.length>0)D.members=d.members;
+    if(d.submissions)D.submissions=d.submissions;
+    connected=true;
+    saveLocal();
+    setConn('connected','CONNECTED — All team members see the same data via Google Sheets');
+    return true;
+  }catch(e){
+    console.error('API load failed:',e);
+    connected=false;
+    setConn('error','CONNECTION FAILED — Check your Apps Script URL. Using local data.');
+    return false;
+  }
+}
+
+async function apiPost(action,payload){
+  if(!D.apiUrl)return false;
+  try{
+    setConn('sync','Saving to Google Sheets...');
+    const r=await fetch(D.apiUrl,{method:'POST',redirect:'follow',
+      headers:{'Content-Type':'text/plain'},
+      body:JSON.stringify({action:action,data:payload})
+    });
+    const d=await r.json();
+    setConn('connected','CONNECTED — All team members see the same data via Google Sheets');
+    return d.ok;
+  }catch(e){
+    console.error('API post failed:',e);
+    setConn('error','SAVE FAILED — Data saved locally. Try refreshing.');
+    return false;
+  }
+}
+
+function setConn(cls,text){
+  const bar=document.getElementById('connBar'),txt=document.getElementById('connText');
+  bar.className='conn-bar '+cls;
+  txt.textContent=text;
+}
+
+function saveUrl(){
+  D.apiUrl=document.getElementById('apiUrl').value.trim();
+  saveLocal();
+  if(D.apiUrl){
+    toast('Connecting...');
+    apiLoad().then(ok=>{
+      if(ok){toast('Connected to Google Sheets!');renderDash();renderTeam();}
+      else toast('Connection failed. Check URL.');
+    });
+  }else{
+    connected=false;
+    setConn('local','LOCAL MODE — No Google Sheets URL configured. Data in this browser only.');
+  }
+}
+
+async function refresh(){
+  if(D.apiUrl){
+    await apiLoad();
+    toast('Refreshed from Google Sheets');
+  }else{
+    toast('No API URL set. Using local data.');
+  }
+  renderDash();
+}
+
+// =============================================
+//  INIT
+// =============================================
+async function init(){
+  D=loadLocal();
+  document.getElementById('apiUrl').value=D.apiUrl||'';
+  document.getElementById('mgrEmail').value=D.managerEmail||'';
+
+  if(D.apiUrl){
+    await apiLoad();
+  }else{
+    setConn('local','LOCAL MODE — Paste your Google Apps Script URL in Team tab to share data');
+  }
+
+  updWkLbl();
+  renderDash();
+  renderTeam();
+}
+
+// =============================================
+//  WEEK
+// =============================================
+const NOW=new Date();
+const MB=new Date(NOW);MB.setDate(NOW.getDate()-((NOW.getDay()+6)%7));MB.setHours(0,0,0,0);
+function wkK(d){return d.toISOString().slice(0,10)}
+let cWk=new Date(MB),wOff=0;
+function updWkLbl(){const e=new Date(cWk);e.setDate(e.getDate()+4);const l=cWk.toLocaleDateString('en-US',{month:'long',day:'numeric'})+' \u2013 '+e.toLocaleDateString('en-US',{day:'numeric',year:'numeric'});document.getElementById('wkLbl').textContent=l;document.getElementById('fSubWeek').value=l;}
+function chgWk(d){wOff+=d;cWk=new Date(MB);cWk.setDate(cWk.getDate()+wOff*7);updWkLbl();renderDash();}
+
+// =============================================
+//  NAV
+// =============================================
+function go(id,el){
+  document.querySelectorAll('.page-section').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  document.querySelectorAll('.topbar-nav a').forEach(a=>a.classList.remove('active'));
+  if(el)el.classList.add('active');
+  if(id==='dashboard')renderDash();
+  if(id==='team'){renderTeam();updApiStatus();}
+}
+
+// =============================================
+//  MODALS
+// =============================================
+function openM(id){document.getElementById(id).classList.add('show')}
+function closeM(id){document.getElementById(id).classList.remove('show')}
+function openSubmit(){
+  const s=document.getElementById('fSubName');s.innerHTML='<option value="">\u2014 Select \u2014</option>';
+  D.members.filter(m=>m.active).forEach(m=>{s.innerHTML+='<option value="'+m.id+'">'+m.name+'</option>'});
+  document.getElementById('fSubUpdate').value='';document.getElementById('fSubNotes').value='';
+  updWkLbl();openM('smModal');
+}
+let eId=null;
+function openAddMbr(){eId=null;document.getElementById('mmTitle').textContent='Add Member';document.getElementById('fName').value='';document.getElementById('fRole').value='';document.getElementById('fEmail').value='';document.getElementById('fStatus').value='active';openM('mmModal')}
+function openEditMbr(id){eId=id;const m=D.members.find(x=>x.id===id);if(!m)return;document.getElementById('mmTitle').textContent='Edit Member';document.getElementById('fName').value=m.name;document.getElementById('fRole').value=m.role;document.getElementById('fEmail').value=m.email;document.getElementById('fStatus').value=m.active?'active':'inactive';openM('mmModal')}
+
+async function saveMbr(){
+  const name=document.getElementById('fName').value.trim(),role=document.getElementById('fRole').value.trim(),email=document.getElementById('fEmail').value.trim(),active=document.getElementById('fStatus').value==='active';
+  if(!name||!email){toast('Fill name and email.');return}
+  const colors=['#2d6a3f','#2a6fa8','#c8982c','#7b4dbf','#c0392b','#d4861a','#1a8a7a','#8a5a2a','#3d8b54','#5485e8'];
+  if(eId){
+    const m=D.members.find(x=>x.id===eId);if(m){m.name=name;m.role=role;m.email=email;m.active=active}
+    await apiPost('updateMember',{id:eId,name,role,email,active});
+    toast('Updated.');
+  }else{
+    const n={id:D.nextId++,name,role,email,active,color:colors[D.members.length%colors.length]};
+    D.members.push(n);
+    await apiPost('addMember',n);
+    toast('Added.');
+  }
+  saveLocal();closeM('mmModal');renderTeam();renderDash();
+}
+
+async function delMbr(id){
+  if(!confirm('Remove this member?'))return;
+  D.members=D.members.filter(m=>m.id!==id);
+  await apiPost('deleteMember',{id});
+  saveLocal();renderTeam();renderDash();toast('Removed.');
+}
+
+// =============================================
+//  SUBMIT
+// =============================================
+async function doSubmit(){
+  const mid=parseInt(document.getElementById('fSubName').value);
+  const update=document.getElementById('fSubUpdate').value.trim();
+  const notes=document.getElementById('fSubNotes').value.trim();
+  if(!mid){toast('Select your name.');return}
+  if(!update){toast('Enter your priorities.');return}
+  const wk=wkK(cWk);if(!D.submissions[wk])D.submissions[wk]={};
+  const mem=D.members.find(m=>m.id===mid);
+  const dt=new Date().toISOString();
+  D.submissions[wk][mid]={update,notes,submittedAt:dt};
+  saveLocal();
+  const payload={WeekKey:wk,MemberID:mid,MemberName:mem?mem.name:'',Priorities:update,Notes:notes,SubmittedAt:dt,OnTime:String(new Date(dt).getDay()===1)};
+  const ok=await apiPost('submit',payload);
+  closeM('smModal');renderDash();
+  toast(ok?'Submitted! Your team can now see your update.':'Saved locally. Could not sync to Google Sheet.');
+}
+
+// =============================================
+//  DASHBOARD
+// =============================================
+function renderDash(){
+  const wk=wkK(cWk),subs=D.submissions[wk]||{},act=D.members.filter(m=>m.active),sub=act.filter(m=>subs[m.id]).length,pend=act.length-sub,comp=act.length?Math.round((sub/act.length)*100):0;
+  document.getElementById('kTotal').textContent=act.length;document.getElementById('kSub').textContent=sub;document.getElementById('kPend').textContent=pend;document.getElementById('kComp').textContent=comp+'%';document.getElementById('kSubN').textContent=sub+' of '+act.length;document.getElementById('kCompN').textContent=sub+' of '+act.length;
+  renderDT(subs,act);
+}
+
+function renderDT(subs,act){
+  const tb=document.getElementById('dashBody');tb.innerHTML='';
+  act.forEach((m,i)=>{
+    const s=subs[m.id],st=s?'submitted':'pending',ini=m.name.split(' ').map(w=>w[0]).join('').toUpperCase();
+    let tw=0,sw=0;Object.keys(D.submissions).forEach(w=>{tw++;if(D.submissions[w][m.id])sw++});
+    const comp=tw?Math.round((sw/tw)*100):0,cc=comp>=80?'var(--accent)':comp>=50?'var(--gold)':'var(--red)';
+    const tr=document.createElement('tr');tr.style.cursor=s?'pointer':'default';
+    if(s)tr.onclick=()=>{const r=document.getElementById('ex-'+i),b=document.getElementById('bx-'+i);if(r)r.classList.toggle('open');if(b)b.classList.toggle('open')};
+    const tm=s?fmtTm(s.submittedAt):'\u2014',er=s&&new Date(s.submittedAt).getDay()===1;
+    tr.innerHTML='<td>'+(s?'<button class="expand-btn" id="bx-'+i+'">&#9660;</button>':'')+'</td><td><div class="member-cell"><div class="avatar" style="background:'+m.color+'">'+ini+'</div><div><div class="member-name">'+m.name+'</div><div class="member-role">'+m.role+'</div></div></div></td><td><span class="status-badge '+st+'"><span class="status-dot"></span>'+(st==='submitted'?'Submitted':'Pending')+'</span></td><td class="time-badge '+(er?'early':'')+'">'+tm+'</td><td><div class="compliance-bar-wrap"><div class="compliance-bar"><div class="compliance-bar-fill" style="width:'+comp+'%;background:'+cc+'"></div></div><span class="compliance-pct" style="color:'+cc+'">'+comp+'%</span></div></td><td></td>';
+    tb.appendChild(tr);
+    if(s){const et=document.createElement('tr');et.className='expand-row';et.id='ex-'+i;et.innerHTML='<td colspan="6" class="expand-cell"><div class="expand-inner"><h4>Weekly Update</h4><div class="update-text">'+escH(s.update)+'</div>'+(s.notes?'<h4 style="margin-top:14px">Notes / Blockers</h4><div class="update-text">'+escH(s.notes)+'</div>':'')+'</div></td>';tb.appendChild(et)}
+  });
+}
+
+function fltTbl(f,btn){
+  document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');
+  const wk=wkK(cWk),subs=D.submissions[wk]||{};
+  renderDT(subs,D.members.filter(m=>m.active).filter(m=>f==='all'||(f==='submitted'&&subs[m.id])||(f==='pending'&&!subs[m.id])));
+}
+
+// =============================================
+//  TEAM
+// =============================================
+function renderTeam(){
+  document.getElementById('mgrEmail').value=D.managerEmail||'';
+  const list=document.getElementById('tList');list.innerHTML='';
+  D.members.forEach(m=>{const ini=m.name.split(' ').map(w=>w[0]).join('').toUpperCase();const row=document.createElement('div');row.className='team-row';
+    row.innerHTML='<div class="avatar" style="background:'+m.color+'">'+ini+'</div><div><div class="team-name-val">'+m.name+'</div><div class="team-role-val">'+(m.role||'\u2014')+' &middot; <span style="color:'+(m.active?'var(--accent)':'var(--red)')+'">'+(m.active?'Active':'Inactive')+'</span></div></div><div class="team-email-val">'+m.email+'</div><div class="team-actions"><button class="icon-btn" onclick="openEditMbr('+m.id+')" title="Edit">&#9998;</button><button class="icon-btn danger" onclick="delMbr('+m.id+')" title="Remove">&#10005;</button></div>';
+    list.appendChild(row)});
+}
+
+function updApiStatus(){
+  const el=document.getElementById('apiStatus');
+  if(connected)el.innerHTML='<div class="info-box" style="margin:0 0 20px"><strong>&#10003; Connected to Google Sheets.</strong> All submissions sync in real-time. Share this page URL with your team — they enter the same Apps Script URL.</div>';
+  else if(D.apiUrl)el.innerHTML='<div class="gold-box" style="margin:0 0 20px"><strong>&#9888; URL set but not connected.</strong> Check the URL or click Retry. <button class="btn btn-secondary" style="margin-left:8px" onclick="apiLoad().then(()=>{updApiStatus();renderDash()})">Retry</button></div>';
+  else el.innerHTML='<div class="gold-box" style="margin:0 0 20px"><strong>&#128161; No connection yet.</strong> Paste your Google Apps Script URL above, then share this page with your team. See the Setup tab for instructions.</div>';
+}
+
+// =============================================
+//  UTILS
+// =============================================
+function fmtTm(iso){const d=new Date(iso);return d.toLocaleDateString('en-US',{weekday:'short'})+' '+d.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'})}
+function esc(t){return t?String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'):''}
+function escH(t){const d=document.createElement('div');d.textContent=t;return d.innerHTML}
+function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.className='show';clearTimeout(t._tt);t._tt=setTimeout(()=>t.className='',3500)}
+
+// =============================================
+//  BOOT
+// =============================================
+document.getElementById('curDate').innerHTML='<strong>'+NOW.toLocaleDateString('en-US',{weekday:'long'})+'</strong><br>'+NOW.toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'});
+document.querySelectorAll('.modal-overlay').forEach(o=>{o.addEventListener('click',e=>{if(e.target===o)o.classList.remove('show')})});
+init();
+</script>
+</body>
+</html>
